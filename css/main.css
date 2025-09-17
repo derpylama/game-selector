@@ -1,0 +1,17 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+li {
+    list-style: none;
+}
+
+#output li {
+    cursor: pointer;
+    padding: 5px;
+    user-select: none; /* Standard syntax */
+}
+#output li.selected {
+  background-color: #171e25;
+}
