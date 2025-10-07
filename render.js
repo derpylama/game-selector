@@ -10,7 +10,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   window.electronAPI.onOwnedGamesResponse((games) =>{
-    console.log(games["games"][0])
+    console.log(games["games"]);
+    console.log('Number of items:', Object.keys(games["games"]).length);
     window.electronAPI.saveSteamGamesToDb(games)
   })
 

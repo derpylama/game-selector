@@ -18,6 +18,28 @@ function getDirectorySize(dirPath) {
 
     return totalSize;
 }
+
+function matchFoldersToAppName(parentFolder, folders, ownedGames) {
+  const matches = [];
+  
+
+  folders.forEach(folder => {
+    const name = path.basename(folder).toLowerCase().replace(/[^a-z0-9]/g, '');
+    const game = ownedGames.find(g => {
+      const gameTitle = (g["app_title"] || g["title"] || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+      // Check if folder name is contained in game title or vice versa
+      return gameTitle.includes(name) || name.includes(gameTitle);
+    });
+    console.log(`Matching folder "${folder}" with name "${name}"`);
+    var fullPath = path.join(parentFolder, folder);
+    if (game) {
+      matches.push({ fullPath, app_name: game["app_name"], title: game["app_title"] });
+    }
+  });
+
+  return matches;
+}
 module.exports = {
-    getDirectorySize
+    getDirectorySize,
+    matchFoldersToAppName
 };

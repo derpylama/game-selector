@@ -5,12 +5,16 @@ const database = require("sqlite3");
 const os = require("os");
 const { execSync } = require('child_process');
 const fileTools = require('./js/filetools');
+const steam = require('./js/steam');
+const epicGames = require('./js/epic');
 
 var steamLibraryFile; 
-
+var Steam;
+var EpicGames;
 
 var steamToken = null;
 const dbPath = path.join(__dirname, 'games.sqlite');
+exports.dbPath = dbPath;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -52,6 +56,12 @@ function openSteamLogin(mainWindow) {
 }
 app.whenReady().then(async () => {
     InitDb();
+
+    Steam = new steam();
+    EpicGames = new epicGames();
+    steamLibraryFile = Steam.steamLibraryFile;
+
+
     createWindow();
 })
 
@@ -88,54 +98,6 @@ if (!steamToken) {
 
 });
 
-function getDefualtSteamLibraryFile(){
-    if (process.platform === "win32"){
-        steamLibraryFile = path.join(
-            process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)",
-            "Steam",
-            "steamapps",
-            "libraryfolders.vdf"
-        )
-    }
-    else if(process.platform === "linux"){
-        steamLibraryFile = path.join(os.homedir(), "./.steam/steam/steamapps/libraryfolders.vdf")
-    }
-    else {
-        throw new Error("Unsupported platform: " + process.platform);
-    }
-}
-
-function parseVDF() {
-    getDefualtSteamLibraryFile()
-
-    var text = fs.readFileSync(steamLibraryFile, "utf-8")
-    const tokens = text.match(/"[^"]*"|{|}/g) || [];
-    let i = 0;
-
-    function parseObject() {
-        const obj = {};
-        while (i < tokens.length) {
-        const token = tokens[i++];
-
-        if (token === "}") return obj;
-        if (token === "{") continue;
-
-        const key = token.replace(/"/g, "");
-        const next = tokens[i++];
-
-        if (next === "{") {
-            obj[key] = parseObject();
-        } else {
-            obj[key] = next.replace(/"/g, "");
-        }
-        }
-        return obj;
-    }
-
-    return parseObject();
-
-}
-
 
 function InitDb(){
     db = new database.Database(dbPath, (err) =>{
@@ -158,13 +120,14 @@ function InitDb(){
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         app_name TEXT UNIQUE,
-        is_installed INTEGER NOT NULL DEFAULT 0
+        is_installed INTEGER NOT NULL DEFAULT 0,
+        install_location TEXT NOT NULL
     )`)
     
 }
 
 ipcMain.on("save-steam-games", (event, games) => {
-    SaveSteamGamesToDb(games)
+    Steam.saveSteamGamesToDb(games)
 })
 
 ipcMain.handle('select-folder', async () => {
@@ -178,42 +141,7 @@ ipcMain.handle('select-folder', async () => {
     }
 });
 
-function SaveSteamGamesToDb(games){
-  if (!games || !Array.isArray(games["games"])) {
-    console.warn("No games to save or invalid response:", data);
-    return;
-  }
-    var installedGames = parseVDF();
 
-    const stmt = db.prepare(`
-        INSERT OR REPLACE INTO steamGames (name, steam_id, img_icon_url)
-        VALUES (?, ?, ?)
-    `);
-
-    const installedAppIds = new Set();
-
-    for (const [key, value] of Object.entries(installedGames["libraryfolders"])) {
-        if (!/^\d+$/.test(key)) continue; // only real library folders
-        const apps = value["apps"] || {};
-        for (const appId of Object.keys(apps)) {
-            installedAppIds.add(appId);
-        }
-    }
-
-    // Now check owned games
-    games["games"].forEach((game) => {
-        if (installedAppIds.has(String(game["appid"]))) {
-            console.log(`${game["name"]}: is installed`);
-        } else {
-            console.log(`${game["name"]}: not installed`);
-        }
-
-        stmt.run(game["name"], game["appid"], game["img_icon_url"])
-    });
-    
-
-    stmt.finalize();
-}
 
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
     if (!gameFolders || gameFolders.length === 0) {
@@ -225,10 +153,40 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     // Parse the JSON string into a JS object
     const games = JSON.parse(output);
 
+    // prepare the sql statement to add all owned games to the database
+    var saveOwnedGamesToDb = db.prepare(`
+        INSERT OR IGNORE INTO epicGames (title, app_name, install_location)
+        VALUES (?, ?, ?)
+    `)
+
+    games.forEach(game => {
+        db.get("SELECT 1 FROM epicGames WHERE app_name = ?", [game["app_name"]], (err, row) => {
+            if (err) {
+                console.error("Database error:", err);
+                return;
+            }
+            if (row) {
+                // Game already exists, skip insertion
+                console.log(`Game with app_name ${game["app_name"]} already exists, skipping insertion.`);
+            } else {
+                // Insert new game
+                saveOwnedGamesToDb.run(game["app_title"], game["app_name"], "", (err) => {
+                    if (err) {
+                        console.error("Error inserting game:", err);
+                    } else {
+                        console.log(`Inserted game: ${game["app_title"]}`);
+                    }
+                });
+            }
+        });
+
+    });
+
+    saveOwnedGamesToDb.finalize();
 
     var addInstalledGamesToDb = db.prepare(`
-        UPDATE epicGames SET is_installed = 1 WHERE app_name = ?
-        `)
+        UPDATE epicGames SET is_installed = 1, install_location = ? WHERE app_name = ?
+    `)
 
     // read the gameFolders content and iterate over them an log them
     gameFolders.forEach(folder => {
@@ -240,7 +198,7 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     
         console.log("Files in selected folder:", files);
     
-        var matchedGames = matchFoldersToAppName(folder, files, games);
+        var matchedGames = fileTools.matchFoldersToAppName(folder, files, games);
         console.log(fileTools.getDirectorySize(folder) + " bytes")
         console.log("Matched games:", matchedGames);
     
@@ -250,7 +208,7 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
                 try {  
                     if(fileTools.getDirectorySize(matchedGame.fullPath) > 20000000){ // only import if the folder is larger than 20MB
                         const importedGames = execSync("legendary import --with-dlcs " + matchedGame.app_name + "  " + matchedGame.fullPath);
-                        addInstalledGamesToDb.run(matchedGame.app_name);
+                        addInstalledGamesToDb.run(matchedGame.fullPath ,matchedGame.app_name);
                     }
                     else {
                         console.warn(`Game "${matchedGame.app_name}" folder size is too small, skipping import.`);
@@ -267,23 +225,3 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     });
 });
 
-function matchFoldersToAppName(parentFolder, folders, ownedGames) {
-  const matches = [];
-  
-
-  folders.forEach(folder => {
-    const name = path.basename(folder).toLowerCase().replace(/[^a-z0-9]/g, '');
-    const game = ownedGames.find(g => {
-      const gameTitle = (g["app_title"] || g["title"] || "").toLowerCase().replace(/[^a-z0-9]/g, '');
-      // Check if folder name is contained in game title or vice versa
-      return gameTitle.includes(name) || name.includes(gameTitle);
-    });
-    console.log(`Matching folder "${folder}" with name "${name}"`);
-    var fullPath = path.join(parentFolder, folder);
-    if (game) {
-      matches.push({ fullPath, app_name: game["app_name"], title: game["app_title"] });
-    }
-  });
-
-  return matches;
-}
