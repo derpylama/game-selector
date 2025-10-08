@@ -115,7 +115,42 @@ class Steam {
         return parseObject();
     
     }
-}
 
+    checkSteamGameInstallationStatus(){
+        var getInstalledGames = db.prepare(`SELECT name, steam_id FROM steamGames`);
+        getInstalledGames.all((err, rows) => {
+            if (err) {
+                console.error("Database error:", err);
+                return;
+            }
+            var installedGames = this.parseVDF();
+            const installedAppIds = new Set();
+
+            for (const [key, value] of Object.entries(installedGames["libraryfolders"])) {
+                if (!/^\d+$/.test(key)) continue; // only real library folders
+                const apps = value["apps"] || {};
+                for (const appId of Object.keys(apps)) {
+                    installedAppIds.add(appId);
+                }
+            }
+
+            rows.forEach(row => {
+                if (!installedAppIds.has(String(row.steam_id))) {
+                    console.log(`Game ${row.name} with Steam ID ${row.steam_id} not found. Updating database.`);
+                    var markAsUninstalled = db.prepare(`UPDATE steamGames SET is_installed = 0 WHERE steam_id = ?`);
+                    markAsUninstalled.run(row.steam_id, (err) => {
+                        if (err) {
+                            console.error("Error updating game status:", err);
+                        } else {
+                            console.log(`Marked ${row.name} as uninstalled in database.`);
+                        }
+                    });
+                    markAsUninstalled.finalize();
+                }
+            });
+        });
+        getInstalledGames.finalize();
+    }
+}
 
 module.exports = Steam;

@@ -40,4 +40,27 @@ window.addEventListener('DOMContentLoaded', () => {
 
         window.electronAPI.importGame(gameFolders);
     })
+
+    const sections = [
+        "games",
+        "lobbys",
+        "settings",
+        "about"
+    ];
+
+    sections.forEach(section => {
+        document.getElementById(`menu-${section}`).addEventListener("click", () => {
+            sections.forEach(sec => {
+                document.getElementById(`content-${sec}`).style.display = "none";
+            });
+            document.getElementById(`content-${section}`).style.display = "block";
+        });
+    });
+
+    // Show default section
+    document.getElementById("content-games").style.display = "block";
+
+    window.electronAPI.getAllGames().then(games => {
+        console.log(games);
+    });
 });

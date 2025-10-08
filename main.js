@@ -7,6 +7,7 @@ const { execSync } = require('child_process');
 const fileTools = require('./js/filetools');
 const steam = require('./js/steam');
 const epicGames = require('./js/epic');
+const settings = require('./js/settings');
 
 var steamLibraryFile; 
 var Steam;
@@ -59,8 +60,10 @@ app.whenReady().then(async () => {
 
     Steam = new steam();
     EpicGames = new epicGames();
-    steamLibraryFile = Steam.steamLibraryFile;
+    Settings = new settings();
 
+    steamLibraryFile = Steam.steamLibraryFile;
+    EpicGames.checkEpicGameInstallationStatus();
 
     createWindow();
 })
@@ -120,6 +123,7 @@ function InitDb(){
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         app_name TEXT UNIQUE,
+        thumbnail_url TEXT,
         is_installed INTEGER NOT NULL DEFAULT 0,
         install_location TEXT NOT NULL
     )`)
@@ -141,7 +145,28 @@ ipcMain.handle('select-folder', async () => {
     }
 });
 
-
+ipcMain.handle('get-all-games', async () => {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM steamGames", (err, steamRows) => {
+            if (err) {
+                console.error("Database error (steam):", err);
+                reject(err);
+                return;
+            }
+            db.all("SELECT * FROM epicGames", (err, epicRows) => {
+                if (err) {
+                    console.error("Database error (epic):", err);
+                    reject(err);
+                    return;
+                }
+                resolve({
+                    steamGames: steamRows,
+                    epicGames: epicRows
+                });
+            });
+        });
+    });
+});
 
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
     if (!gameFolders || gameFolders.length === 0) {
@@ -155,34 +180,37 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
 
     // prepare the sql statement to add all owned games to the database
     var saveOwnedGamesToDb = db.prepare(`
-        INSERT OR IGNORE INTO epicGames (title, app_name, install_location)
-        VALUES (?, ?, ?)
+        INSERT OR IGNORE INTO epicGames (title, app_name, install_location, thumbnail_url)
+        VALUES (?, ?, ?, ?)
     `)
+
+    let pending = games.length;
 
     games.forEach(game => {
         db.get("SELECT 1 FROM epicGames WHERE app_name = ?", [game["app_name"]], (err, row) => {
             if (err) {
                 console.error("Database error:", err);
-                return;
             }
-            if (row) {
-                // Game already exists, skip insertion
-                console.log(`Game with app_name ${game["app_name"]} already exists, skipping insertion.`);
-            } else {
-                // Insert new game
-                saveOwnedGamesToDb.run(game["app_title"], game["app_name"], "", (err) => {
+            if (!row) {
+                var imageUrl = "";
+                if (game["metadata"] && game["metadata"]["keyImages"] && game["metadata"]["keyImages"].length > 1) {
+                    imageUrl = game["metadata"]["keyImages"][1]["url"];
+                }
+                saveOwnedGamesToDb.run(game["app_title"], game["app_name"], "", imageUrl, (err) => {
                     if (err) {
                         console.error("Error inserting game:", err);
                     } else {
                         console.log(`Inserted game: ${game["app_title"]}`);
                     }
+                    pending--;
+                    if (pending === 0) saveOwnedGamesToDb.finalize();
                 });
+            } else {
+                pending--;
+                if (pending === 0) saveOwnedGamesToDb.finalize();
             }
         });
-
     });
-
-    saveOwnedGamesToDb.finalize();
 
     var addInstalledGamesToDb = db.prepare(`
         UPDATE epicGames SET is_installed = 1, install_location = ? WHERE app_name = ?

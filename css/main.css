@@ -1,6 +1,7 @@
 *{
     margin: 0;
     padding: 0;
+    
 }
 
 li {
@@ -14,4 +15,51 @@ li {
 }
 #output li.selected {
   background-color: #171e25;
+}
+body {
+    display: flex;
+    background-color: #0f141a;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100vh;
+
+}
+
+menu {
+    background-color: #171e25;
+    color: white;
+    display: flex;
+    flex-direction: column; /* Stack items vertically */
+    gap: 20px;
+    padding: 10px;
+    font-size: 18px;
+    height: 100vh;           /* Full viewport height */
+    width: 200px;            /* Set a fixed width */
+    left: 0;
+    top: 0;
+}
+
+menu div {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: left;
+    background-color: #0f141a;
+}
+
+menu div:hover {
+    background-color: #1a222b;
+    color: gray;
+}
+
+.main-content {
+    flex: 1; /* Take remaining space */
+    padding: 20px;
+}
+
+.content-section {
+    display: none;
+}
+.content-section.active {
+    display: block;
 }

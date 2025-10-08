@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSteamGamesToDb: (games) => ipcRenderer.send("save-steam-games", games),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   importGame: (gameFolders) => ipcRenderer.invoke('import-game', { gameFolders }),
+  getAllGames: () => ipcRenderer.invoke('get-all-games')
 
 });
