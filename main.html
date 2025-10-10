@@ -16,7 +16,7 @@
     <div class="main-content">
         <div id="content-games" class="content-section">Game Selector Content
         <button id="test">Button</button>
-        <button id="getOwnedGames"></button>
+        <button id="getOwnedGames">get steam games</button>
 
         <label title="enter heroic games json">enter heroic games json</label>
         <button id="selectFolder">Select Folder</button>
@@ -24,14 +24,41 @@
         <ul id="epicGamesList"></ul>
 
         <button id="import">load downloaded epic games</button>
-
+        <ul id="gamesList">
+            <!-- Games will be dynamically added here -->
+        </ul>
 
         </div>
         
-        <div id="content-lobbys" class="content-section" style="display:none;">Lobbys Content</div>
+        <div id="content-lobbys" class="content-section" style="display:none;">
+            
 
-        <div id="content-settings" class="content-section" style="display:none;">Settings Content</div>
-        <div id="content-about" class="content-section" style="display:none;">About Content</div>
+            connect to Backend
+            <button id="connectButton">Connect</button>
+            <br>
+            -------------------------------
+            <br>
+            create Lobby
+
+            <button id="createLobbyButton">Create Lobby</button>
+            <ul id="lobbyList"></ul>
+
+        </div>
+
+        <div id="content-settings" class="content-section" style="display:none;">
+            Settings Content
+
+            <input type="text" id="serverAddress" placeholder="Server Address" value="">
+            <input type="text" id="serverPort" placeholder="Server Port" value="">
+            <button id="saveSettingsButton">Save Settings</button>
+        </div>
+
+
+        <div id="content-about" class="content-section" style="display:none;">
+            About Content
+
+
+        </div>
     </div>
 
   <script src="render.js"></script>

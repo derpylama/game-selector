@@ -8,10 +8,12 @@ const fileTools = require('./js/filetools');
 const steam = require('./js/steam');
 const epicGames = require('./js/epic');
 const settings = require('./js/settings');
+const webSocket = require('ws');
 
 var steamLibraryFile; 
 var Steam;
 var EpicGames;
+var Settings;
 
 var steamToken = null;
 const dbPath = path.join(__dirname, 'games.sqlite');
@@ -64,8 +66,10 @@ app.whenReady().then(async () => {
 
     steamLibraryFile = Steam.steamLibraryFile;
     EpicGames.checkEpicGameInstallationStatus();
-
+    
     createWindow();
+    
+    renderGames();
 })
 
 ipcMain.on('open-steam-login', (event) => {
@@ -253,3 +257,23 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     });
 });
 
+ipcMain.handle('save-settings', (event, settings) => {
+    console.log(settings)
+    
+    Settings.setSetting("backendIP", settings.backendIP);
+    Settings.setSetting("backendPort", settings.backendPort);
+
+    var client = new webSocket(`ws://localhost:3001?token=${steamToken}`);
+    client.on('open', () => {
+        client.send(JSON.stringify({ type: 'updateSettings', data: settings }));
+        
+    });
+    // Listen for messages from the server
+    client.on('message', (data) => {
+        console.log('Received from server:', data);
+    });
+
+    client.on('close', (code, reason) => {
+        console.log('WebSocket connection closed:', code, reason.toString());
+    });
+});

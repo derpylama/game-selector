@@ -10,8 +10,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   window.electronAPI.onOwnedGamesResponse((games) =>{
-    console.log(games["games"]);
-    console.log('Number of items:', Object.keys(games["games"]).length);
+    //console.log(games["games"]);
+    //console.log('Number of items:', Object.keys(games["games"]).length);
     window.electronAPI.saveSteamGamesToDb(games)
   })
 
@@ -61,6 +61,70 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("content-games").style.display = "block";
 
     window.electronAPI.getAllGames().then(games => {
-        console.log(games);
+        console.log(games.epicGames);
+        console.log(games.steamGames);
+        var gamesList = document.getElementById("gamesList");
+        games.epicGames.forEach(game => {
+            var gameCard = document.createElement("div");
+            gameCard.className = "gameCard";
+            gameCard.innerHTML = `
+                <img src="${game.thumbnail_url}" alt="${game.title} Thumbnail" class="gameThumbnail">
+                <div class="gameInfo">
+                    <h3>${game.title}</h3>
+                    <p>Installed: ${game.is_installed ? "Yes" : "No"}</p>
+                </div>
+            `;
+
+            if (!game.is_installed) {
+                gameCard.classList.add("notInstalled");
+            }
+            gamesList.appendChild(gameCard);
+        });
+        games.steamGames.forEach(game => {
+            var gameCard = document.createElement("div");
+            gameCard.className = "gameCard";
+            gameCard.innerHTML = `
+                <img src="https://media.steampowered.com/steamcommunity/public/images/apps/${game.steam_id}/${game.img_icon_url}.jpg" alt="${game.name} Thumbnail" class="gameThumbnail">
+                <div class="gameInfo">
+                    <h3>${game.name}</h3>
+                </div>
+            `;
+
+            if(!game.is_installed){
+                gameCard.classList.add("notInstalled");
+            }
+
+            gamesList.appendChild(gameCard);
+        });
+
+        document.querySelectorAll('.gameCard img').forEach(img => {
+        img.onload = function() {
+        if (img.naturalWidth > img.naturalHeight) {
+            img.classList.add('landscape-img');
+            img.classList.remove('portrait-img');
+        } else {
+            img.classList.add('portrait-img');
+            img.classList.remove('landscape-img');
+        }
+    };
+});
+
     });
+        
+    document.getElementById("saveSettingsButton").addEventListener("click", () => {
+        window.electronAPI.saveSettings(
+            { "backendIP": document.getElementById("serverAddress").value, 
+                "backendPort": document.getElementById("serverPort").value
+
+            }
+        );
+        console.log("Settings saved");
+    })
+
+    document.getElementById("connectButton").addEventListener("click", () => {
+        window.electronAPI.connectToServer();
+
+    })
+
+    
 });

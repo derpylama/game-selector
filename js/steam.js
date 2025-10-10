@@ -31,36 +31,35 @@ class Steam {
         }
 
         // Now check owned games
-        games["games"].forEach((game) => {
-            if (installedAppIds.has(String(game["appid"]))) {
-                console.log(`${game["name"]}: is installed`);
-            } else {
-                console.log(`${game["name"]}: not installed`);
-            }
+        let pending = games["games"].length;
 
+        games["games"].forEach((game) => {
             db.get("SELECT 1 FROM steamGames WHERE steam_id = ?", [game["appid"]], (err, row) => {
                 if (err) {
                     console.error("Database error:", err);
+                    pending--;
+                    if (pending === 0) stmt.finalize();
                     return;
                 }
-                if (row) {
-                    // Game already exists, skip insertion
-                    console.log(`Game with steam_id ${game["appid"]} already exists, skipping insertion.`);
-                } else {
-                    // Insert new game
+                if (!row) {
                     stmt.run(game["name"], game["appid"], game["img_icon_url"], (err) => {
                         if (err) {
                             console.error("Error inserting game:", err);
                         } else {
                             console.log(`Inserted game: ${game["name"]}`);
                         }
+                        pending--;
+                        if (pending === 0) stmt.finalize();
                     });
+                } else {
+                    pending--;
+                    if (pending === 0) stmt.finalize();
                 }
             });
         });
 
-            
-        stmt.finalize();
+        this.checkSteamGameInstallationStatus();
+
     }
         
 
@@ -136,7 +135,7 @@ class Steam {
 
             rows.forEach(row => {
                 if (!installedAppIds.has(String(row.steam_id))) {
-                    console.log(`Game ${row.name} with Steam ID ${row.steam_id} not found. Updating database.`);
+                    // Mark as uninstalled
                     var markAsUninstalled = db.prepare(`UPDATE steamGames SET is_installed = 0 WHERE steam_id = ?`);
                     markAsUninstalled.run(row.steam_id, (err) => {
                         if (err) {
@@ -146,6 +145,15 @@ class Steam {
                         }
                     });
                     markAsUninstalled.finalize();
+                } else {
+                    // Mark as installed
+                    var markAsInstalled = db.prepare(`UPDATE steamGames SET is_installed = 1 WHERE steam_id = ?`);
+                    markAsInstalled.run(row.steam_id, (err) => {
+                        if (err) {
+                            console.error("Error updating game status:", err);
+                        }
+                    });
+                    markAsInstalled.finalize();
                 }
             });
         });
