@@ -112,9 +112,18 @@ window.addEventListener('DOMContentLoaded', () => {
     });
         
     document.getElementById("saveSettingsButton").addEventListener("click", () => {
+
+        var gameFolders = [];
+
+        document.getElementById("epicGamesList").childNodes.forEach(folder => {
+            gameFolders.push(folder.innerText);
+        });
+
+
         window.electronAPI.saveSettings(
             { "backendIP": document.getElementById("serverAddress").value, 
-                "backendPort": document.getElementById("serverPort").value
+                "backendPort": document.getElementById("serverPort").value,
+                "epicGamesLibraries": gameFolders
 
             }
         );
@@ -127,4 +136,28 @@ window.addEventListener('DOMContentLoaded', () => {
     })
 
     
+});
+
+window.electronAPI.loadedSettings((settings) => {
+    console.log(settings);
+    if (settings.backendIP) {
+        document.getElementById("serverAddress").value = settings.backendIP;
+    }
+    if (settings.backendPort) {
+        document.getElementById("serverPort").value = settings.backendPort;
+    }
+    if (settings.epicGamesLibraryFolders) {
+        var folders = JSON.parse(settings.epicGamesLibraryFolders);
+        var epicGamesList = document.getElementById("epicGamesList");
+        folders.forEach(folder => {
+            epicGamesList.innerHTML += `<li>${folder}</li>`;
+        });
+    }
+});
+
+document.getElementById("createLobbyButton").addEventListener("click", () => {
+    console.log("Create Lobby button clicked");
+
+    window.electronAPI.createLobby();
+
 });

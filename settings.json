@@ -1,5 +1,5 @@
 {
-    "epicGamesLibraryFolders": [],
-    "backendIP": "",
-    "backendPort": ""
+    "epicGamesLibraryFolders": "[\"/media/spel_och_program/epic-games\",\"/media/games/epicGames\"]",
+    "backendIP": "localhost",
+    "backendPort": "3001"
 }

@@ -9,18 +9,21 @@ const steam = require('./js/steam');
 const epicGames = require('./js/epic');
 const settings = require('./js/settings');
 const webSocket = require('ws');
+const lobbyClient = require('./js/websockethandler');
 
 var steamLibraryFile; 
 var Steam;
 var EpicGames;
 var Settings;
+var LobbyClient;
+var authToken = null;
+var win;
 
-var steamToken = null;
 const dbPath = path.join(__dirname, 'games.sqlite');
 exports.dbPath = dbPath;
 
 function createWindow() {
-  const win = new BrowserWindow({
+    win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -51,12 +54,12 @@ function openSteamLogin(mainWindow) {
     if (url.startsWith('http://localhost:3000/auth/steam/success')) {
       const token = new URL(url).searchParams.get('token');
       console.log('Token received in main process:', token);
-      steamToken = token;
+      authToken = token;
       mainWindow.webContents.send('steam-token', token);
       steamWin.close();
     }
   });
-}
+}   
 app.whenReady().then(async () => {
     InitDb();
 
@@ -68,8 +71,14 @@ app.whenReady().then(async () => {
     EpicGames.checkEpicGameInstallationStatus();
     
     createWindow();
-    
-    renderGames();
+
+    win.webContents.on('did-finish-load', () => {
+        win.webContents.send("loaded-settings", {
+            epicGamesLibraryFolders: Settings.getSetting("epicGamesLibraryFolders"),
+            backendIP: Settings.getSetting("backendIP"),
+            backendPort: Settings.getSetting("backendPort")
+        });
+    })
 })
 
 ipcMain.on('open-steam-login', (event) => {
@@ -78,14 +87,14 @@ ipcMain.on('open-steam-login', (event) => {
 
 
 ipcMain.on("get-owned-games", async (event) => {
-if (!steamToken) {
+if (!authToken) {
     event.reply("owned-games-response", { error: "Not logged in" });
     return;
   }
 
   try {
     const res = await fetch("http://localhost:3000/api/owned-games", {
-      headers: { Authorization: `Bearer ${steamToken}` },
+      headers: { Authorization: `Bearer ${authToken}` },
     });
 
     if (res.status === 401) throw new Error("Token expired, please log in again.");
@@ -260,20 +269,39 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
 ipcMain.handle('save-settings', (event, settings) => {
     console.log(settings)
     
-    Settings.setSetting("backendIP", settings.backendIP);
-    Settings.setSetting("backendPort", settings.backendPort);
+    if(!settings.backendIP == ""){
+        Settings.setSetting("backendIP", settings.backendIP);
+    }
 
-    var client = new webSocket(`ws://localhost:3001?token=${steamToken}`);
-    client.on('open', () => {
-        client.send(JSON.stringify({ type: 'updateSettings', data: settings }));
-        
-    });
-    // Listen for messages from the server
-    client.on('message', (data) => {
-        console.log('Received from server:', data);
-    });
+    if(!settings.backendPort == ""){
+        Settings.setSetting("backendPort", settings.backendPort);
+    }
+    //dont save if the array is empty
+    if(settings.epicGamesLibraries && settings.epicGamesLibraries.length > 0){
+        Settings.setSetting("epicGamesLibraryFolders", JSON.stringify(settings.epicGamesLibraries));
+    }
+});
 
-    client.on('close', (code, reason) => {
-        console.log('WebSocket connection closed:', code, reason.toString());
-    });
+
+ipcMain.on('connect-to-server', (event) => {
+
+    var ip = Settings.getSetting("backendIP");
+    var port = Settings.getSetting("backendPort");
+
+    LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken);
+
+    if (authToken) {
+        LobbyClient.connect();
+    } else {
+        console.error("Cannot connect to server: No Steam token available.");
+    }
+});
+
+ipcMain.on("create-lobby", (event) => {
+    console.log("Creating lobby...");
+    if (LobbyClient) {
+        LobbyClient.sendMessage(JSON.stringify({ action: "create_lobby", payload: { lobbyName: "Test Lobby" } }));
+    } else {
+        console.error("LobbyClient is not initialized.");
+    }
 });
