@@ -10,6 +10,7 @@ const epicGames = require('./js/epic');
 const settings = require('./js/settings');
 const webSocket = require('ws');
 const lobbyClient = require('./js/websockethandler');
+const { asyncWrapProviders } = require('node:async_hooks');
 
 var steamLibraryFile; 
 var Steam;
@@ -160,7 +161,8 @@ ipcMain.handle('select-folder', async () => {
 
 ipcMain.handle('get-all-games', async () => {
     return new Promise((resolve, reject) => {
-        db.all("SELECT * FROM steamGames", (err, steamRows) => {
+        if (db) {
+            db.all("SELECT * FROM steamGames", (err, steamRows) => {
             if (err) {
                 console.error("Database error (steam):", err);
                 reject(err);
@@ -177,7 +179,9 @@ ipcMain.handle('get-all-games', async () => {
                     epicGames: epicRows
                 });
             });
-        });
+            });
+            
+        }
     });
 });
 
@@ -198,7 +202,8 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     `)
 
     let pending = games.length;
-
+    
+    // iterate over all games and add them to the database if they don't exist yet
     games.forEach(game => {
         db.get("SELECT 1 FROM epicGames WHERE app_name = ?", [game["app_name"]], (err, row) => {
             if (err) {
@@ -282,8 +287,30 @@ ipcMain.handle('save-settings', (event, settings) => {
     }
 });
 
+async function getAllGamesFromDb() {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM steamGames", (err, steamRows) => {
+            if (err) {
+                console.error("Database error (steam):", err);
+                reject(err);
+                return;
+            }
+            db.all("SELECT * FROM epicGames", (err, epicRows) => {
+                if (err) {
+                    console.error("Database error (epic):", err);
+                    reject(err);
+                    return;
+                }
+                resolve({
+                    steamGames: steamRows,
+                    epicGames: epicRows
+                });
+            });
+        });
+    });
+}
 
-ipcMain.on('connect-to-server', (event) => {
+ipcMain.on('connect-to-server',  (event) => {
 
     var ip = Settings.getSetting("backendIP");
     var port = Settings.getSetting("backendPort");
@@ -297,11 +324,23 @@ ipcMain.on('connect-to-server', (event) => {
     }
 });
 
-ipcMain.on("create-lobby", (event) => {
+ipcMain.on("create-lobby", async (event, lobbyName) => {
     console.log("Creating lobby...");
+
+    await getAllGamesFromDb().then(games => {
+        if (LobbyClient) {
+            LobbyClient.sendAction("create_lobby", { lobbyName: "Test Lobby", games: games });
+        } else {
+            console.error("LobbyClient is not initialized.");
+        }
+    }).catch(err => {
+        console.error("Failed to retrieve games from database:", err);
+    });
+
+    /*
     if (LobbyClient) {
         LobbyClient.sendMessage(JSON.stringify({ action: "create_lobby", payload: { lobbyName: "Test Lobby" } }));
     } else {
         console.error("LobbyClient is not initialized.");
-    }
+    }*/
 });

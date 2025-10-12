@@ -158,6 +158,6 @@ window.electronAPI.loadedSettings((settings) => {
 document.getElementById("createLobbyButton").addEventListener("click", () => {
     console.log("Create Lobby button clicked");
 
-    window.electronAPI.createLobby();
+    window.electronAPI.createLobby(document.getElementById("lobbyNameInput").value);
 
 });

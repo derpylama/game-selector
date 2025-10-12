@@ -8,28 +8,36 @@ class EpicGames{
     }
 
     checkEpicGameInstallationStatus(){
-        var getInstalledGames = db.prepare(`SELECT app_name, install_location FROM epicGames WHERE is_installed = 1`);
-        getInstalledGames.all((err, rows) => {
-            if (err) {
-                console.error("Database error:", err);
+        try {    
+            if (!fs.existsSync(path.join(__dirname, 'games.sqlite'))) {
+                console.warn("Epic games database not found.");
                 return;
             }
-            rows.forEach(row => {
-                if (!fs.existsSync(row.install_location)) {
-                    console.log(`Game at ${row.install_location} not found. Updating database.`);
-                    var markAsUninstalled = db.prepare(`UPDATE epicGames SET is_installed = 0, install_location = '' WHERE app_name = ?`);
-                    markAsUninstalled.run(row.app_name, (err) => {
-                        if (err) {
-                            console.error("Error updating game status:", err);
-                        } else {
-                            console.log(`Marked ${row.app_name} as uninstalled.`);
-                        }
-                    });
-                    markAsUninstalled.finalize();
+            var getInstalledGames = db.prepare(`SELECT app_name, install_location FROM epicGames WHERE is_installed = 1`);
+            getInstalledGames.all((err, rows) => {
+                if (err) {
+                    console.error("Database error:", err);
+                    return;
                 }
+                rows.forEach(row => {
+                    if (!fs.existsSync(row.install_location)) {
+                        console.log(`Game at ${row.install_location} not found. Updating database.`);
+                        var markAsUninstalled = db.prepare(`UPDATE epicGames SET is_installed = 0, install_location = '' WHERE app_name = ?`);
+                        markAsUninstalled.run(row.app_name, (err) => {
+                            if (err) {
+                                console.error("Error updating game status:", err);
+                            } else {
+                                console.log(`Marked ${row.app_name} as uninstalled.`);
+                            }
+                        });
+                        markAsUninstalled.finalize();
+                    }
+                });
             });
-        });
-        getInstalledGames.finalize();
+            getInstalledGames.finalize();
+        } catch (error) {
+            console.error("Error checking Epic game installation status:", error);
+        }
     }
 }
 

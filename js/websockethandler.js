@@ -24,10 +24,16 @@ class LobbyClient {
             }
 
             const { action, payload } = message;
-            if (this.actionHandlers[action]) {
-                this.actionHandlers[action](payload);
-            } else {
-                console.warn('No handler for action:', action);
+
+            switch (action) {
+                case 'lobby_created':
+                    console.log('Lobby created with ID:', payload);
+                    break;
+                case 'error':
+                    console.error('Error from server:', payload);
+                    break;
+                
+
             }
         });
 
@@ -60,6 +66,11 @@ class LobbyClient {
         } else {
             console.error('WebSocket is not open. Cannot send message.');
         }
+    }
+
+    //on message handler
+    onMessage(handler) {
+        this.socket.on('message', handler);
     }
 }
 
