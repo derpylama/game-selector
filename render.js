@@ -161,3 +161,10 @@ document.getElementById("createLobbyButton").addEventListener("click", () => {
     window.electronAPI.createLobby(document.getElementById("lobbyNameInput").value);
 
 });
+
+document.getElementById("joinLobbyButton").addEventListener("click", () => {
+    console.log("Join Lobby button clicked");
+
+    window.electronAPI.joinLobby(document.getElementById("lobbyIdInput").value);
+
+});

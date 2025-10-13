@@ -29,6 +29,12 @@ class LobbyClient {
                 case 'lobby_created':
                     console.log('Lobby created with ID:', payload);
                     break;
+                case 'lobby_joined':
+                    console.log('Joined lobby with ID:', payload);
+                    break;
+                case 'lobby_update':
+                    console.log('Lobby update:', payload);
+                    break;
                 case 'error':
                     console.error('Error from server:', payload);
                     break;
@@ -66,11 +72,6 @@ class LobbyClient {
         } else {
             console.error('WebSocket is not open. Cannot send message.');
         }
-    }
-
-    //on message handler
-    onMessage(handler) {
-        this.socket.on('message', handler);
     }
 }
 

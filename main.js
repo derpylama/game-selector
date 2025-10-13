@@ -337,10 +337,13 @@ ipcMain.on("create-lobby", async (event, lobbyName) => {
         console.error("Failed to retrieve games from database:", err);
     });
 
-    /*
+});
+
+ipcMain.on("join-lobby", (event, lobbyId) => {
+    console.log("Joining lobby:", lobbyId);
     if (LobbyClient) {
-        LobbyClient.sendMessage(JSON.stringify({ action: "create_lobby", payload: { lobbyName: "Test Lobby" } }));
+        LobbyClient.sendAction("join_lobby", { lobbyId: lobbyId });
     } else {
         console.error("LobbyClient is not initialized.");
-    }*/
+    }
 });

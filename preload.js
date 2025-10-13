@@ -13,5 +13,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   connectToServer: () => ipcRenderer.send('connect-to-server'),
   loadedSettings: (callback) => ipcRenderer.on('loaded-settings', (event, settings) => callback(settings)),
-  createLobby: () => ipcRenderer.send('create-lobby', lobbyName),
+  createLobby: (lobbyName) => ipcRenderer.send('create-lobby', lobbyName),
+  joinLobby: (lobbyId) => ipcRenderer.send('join-lobby', lobbyId),
 });
