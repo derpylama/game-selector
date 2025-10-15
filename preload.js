@@ -15,4 +15,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadedSettings: (callback) => ipcRenderer.on('loaded-settings', (event, settings) => callback(settings)),
   createLobby: (lobbyName) => ipcRenderer.send('create-lobby', lobbyName),
   joinLobby: (lobbyId) => ipcRenderer.send('join-lobby', lobbyId),
+  leaveLobby: () => ipcRenderer.send('leave-lobby'),
+  lobbyUpdate: (callback) => ipcRenderer.on('update-lobby-info', (event, lobbyInfo) => callback(lobbyInfo)),
 });

@@ -347,3 +347,12 @@ ipcMain.on("join-lobby", (event, lobbyId) => {
         console.error("LobbyClient is not initialized.");
     }
 });
+
+ipcMain.on("leave-lobby", (event) => {
+    var lobbyInfo = LobbyClient.getLobbyInfo();
+    if (LobbyClient) {
+        LobbyClient.sendAction("leave_lobby",{ lobbyId: lobbyInfo.lobbyId, lobbyName: lobbyInfo.lobbyName });
+    } else {
+        console.error("LobbyClient is not initialized.");
+    }
+});

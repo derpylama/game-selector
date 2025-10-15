@@ -1,11 +1,16 @@
 const WebSocket = require('ws');
+const { ipcMain, BrowserWindow } = require("electron")
 
 class LobbyClient {
     constructor(url) {
         this.url = url;
         this.socket = null;
         this.actionHandlers = {}; // action -> handler function
+        this.lobbyId = null;
+        this.lobbyName = null;
+        
     }
+
 
     connect() {
         this.socket = new WebSocket(this.url);
@@ -28,12 +33,30 @@ class LobbyClient {
             switch (action) {
                 case 'lobby_created':
                     console.log('Lobby created with ID:', payload);
+                    this.lobbyId = payload.lobbyId;
+                    this.lobbyName = payload.lobbyName;
+
+                    // Wait for connection to be open before joining
+                    if (this.socket.readyState === WebSocket.OPEN) {
+                        this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                        this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                    } else {
+                        this.socket.once('open', () => {
+                            this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                            this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                        });
+                    }
                     break;
                 case 'lobby_joined':
                     console.log('Joined lobby with ID:', payload);
+                    this.lobbyId = payload.lobbyId;
+                    this.lobbyName = payload.lobbyName;
                     break;
                 case 'lobby_update':
                     console.log('Lobby update:', payload);
+                    break;
+                case 'lobby_left':
+                    console.log('Left lobby:', payload);
                     break;
                 case 'error':
                     console.error('Error from server:', payload);
@@ -72,6 +95,17 @@ class LobbyClient {
         } else {
             console.error('WebSocket is not open. Cannot send message.');
         }
+    }
+
+    getLobbyInfo() {
+        return { lobbyId: this.lobbyId, lobbyName: this.lobbyName }; 
+    }   
+
+    notifyRenderer(channel, data) {
+        for (const window of BrowserWindow.getAllWindows()) {
+            window.webContents.send(channel, data);
+        }
+
     }
 }
 

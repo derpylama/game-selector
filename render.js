@@ -155,6 +155,11 @@ window.electronAPI.loadedSettings((settings) => {
     }
 });
 
+window.electronAPI.lobbyUpdate((lobbyInfo) => {
+    console.log("Lobby Info Updated:", lobbyInfo);
+    //document.getElementById("currentLobbyInfo").innerText = `Lobby ID: ${lobbyInfo.lobbyId}, Lobby Name: ${lobbyInfo.lobbyName}`;
+});
+
 document.getElementById("createLobbyButton").addEventListener("click", () => {
     console.log("Create Lobby button clicked");
 
@@ -166,5 +171,12 @@ document.getElementById("joinLobbyButton").addEventListener("click", () => {
     console.log("Join Lobby button clicked");
 
     window.electronAPI.joinLobby(document.getElementById("lobbyIdInput").value);
+
+});
+
+document.getElementById("leaveLobbyButton").addEventListener("click", () => {
+    console.log("Leave Lobby button clicked");
+
+    window.electronAPI.leaveLobby();
 
 });
