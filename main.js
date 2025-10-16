@@ -315,12 +315,13 @@ ipcMain.on('connect-to-server',  (event) => {
     var ip = Settings.getSetting("backendIP");
     var port = Settings.getSetting("backendPort");
 
-    LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken);
+    LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken, "mupp");
 
     if (authToken) {
         LobbyClient.connect();
+        
     } else {
-        console.error("Cannot connect to server: No Steam token available.");
+        console.error("Cannot connect to server: No auth token available.");
     }
 });
 
@@ -343,6 +344,7 @@ ipcMain.on("join-lobby", (event, lobbyId) => {
     console.log("Joining lobby:", lobbyId);
     if (LobbyClient) {
         LobbyClient.sendAction("join_lobby", { lobbyId: lobbyId });
+
     } else {
         console.error("LobbyClient is not initialized.");
     }

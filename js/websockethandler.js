@@ -2,12 +2,13 @@ const WebSocket = require('ws');
 const { ipcMain, BrowserWindow } = require("electron")
 
 class LobbyClient {
-    constructor(url) {
+    constructor(url, username) {
         this.url = url;
         this.socket = null;
         this.actionHandlers = {}; // action -> handler function
         this.lobbyId = null;
         this.lobbyName = null;
+        this.username = username;
         
     }
 
@@ -17,6 +18,7 @@ class LobbyClient {
 
         this.socket.on('open', () => {
             console.log('WebSocket connection established');
+            this.sendAction('set_username', { username: this.username });
         });
 
         this.socket.on('message', (data) => {
@@ -58,9 +60,19 @@ class LobbyClient {
                 case 'lobby_left':
                     console.log('Left lobby:', payload);
                     break;
+                case 'username_set':
+                    console.log('Username set to:', payload);
+                    break;
                 case 'error':
                     console.error('Error from server:', payload);
                     break;
+                default:
+                    if (this.actionHandlers[action]) {
+                        this.actionHandlers[action](payload);
+                    } else {
+                        console.warn('No handler for action:', action);
+                    }
+                
                 
 
             }
@@ -98,6 +110,7 @@ class LobbyClient {
     }
 
     getLobbyInfo() {
+
         return { lobbyId: this.lobbyId, lobbyName: this.lobbyName }; 
     }   
 
