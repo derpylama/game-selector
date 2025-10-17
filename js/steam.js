@@ -116,21 +116,23 @@ class Steam {
     }
 
     checkSteamGameInstallationStatus(){
-        var getInstalledGames = db.prepare(`SELECT name, steam_id FROM steamGames`);
-        getInstalledGames.all((err, rows) => {
+        var installedGames = this.parseVDF();
+        //var getInstalledGames = db.prepare(`SELECT name, steam_id FROM steamGames`);
+        
+        const installedAppIds = new Set();
+
+        for (const [key, value] of Object.entries(installedGames["libraryfolders"])) {
+            if (!/^\d+$/.test(key)) continue; // only real library folders
+            const apps = value["apps"] || {};
+            for (const appId of Object.keys(apps)) {
+                installedAppIds.add(appId);
+            }
+        }
+
+        db.all(`SELECT name, steam_id FROM steamGames`, (err, rows) => {
             if (err) {
                 console.error("Database error:", err);
                 return;
-            }
-            var installedGames = this.parseVDF();
-            const installedAppIds = new Set();
-
-            for (const [key, value] of Object.entries(installedGames["libraryfolders"])) {
-                if (!/^\d+$/.test(key)) continue; // only real library folders
-                const apps = value["apps"] || {};
-                for (const appId of Object.keys(apps)) {
-                    installedAppIds.add(appId);
-                }
             }
 
             rows.forEach(row => {
@@ -157,7 +159,7 @@ class Steam {
                 }
             });
         });
-        getInstalledGames.finalize();
+        
     }
 }
 

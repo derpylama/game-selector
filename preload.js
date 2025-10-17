@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, shell } = require('electron');
+const { contextBridge, ipcRenderer} = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   openSteamLogin: () => ipcRenderer.send('open-steam-login'),
@@ -17,4 +17,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   joinLobby: (lobbyId) => ipcRenderer.send('join-lobby', lobbyId),
   leaveLobby: () => ipcRenderer.send('leave-lobby'),
   lobbyUpdate: (callback) => ipcRenderer.on('update-lobby-info', (event, lobbyInfo) => callback(lobbyInfo)),
+  updateLobbyGames: (callback) => ipcRenderer.on('update-lobby-games', (event, games) => callback(games)),
+
 });

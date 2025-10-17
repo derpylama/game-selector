@@ -13,15 +13,18 @@ class LobbyClient {
     }
 
 
-    connect() {
+    connect(gamesList) {
         this.socket = new WebSocket(this.url);
 
         this.socket.on('open', () => {
             console.log('WebSocket connection established');
-            this.sendAction('set_username', { username: this.username });
+            this.sendAction('set_user_data', { username: this.username, games: gamesList });
+            
         });
 
         this.socket.on('message', (data) => {
+
+
             let message;
             try {
                 message = JSON.parse(data.toString());
@@ -40,12 +43,12 @@ class LobbyClient {
 
                     // Wait for connection to be open before joining
                     if (this.socket.readyState === WebSocket.OPEN) {
-                        this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
-                        this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                        this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
+                        //this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers  });
                     } else {
                         this.socket.once('open', () => {
-                            this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
-                            this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName });
+                            this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
+                            //this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
                         });
                     }
                     break;
@@ -53,9 +56,16 @@ class LobbyClient {
                     console.log('Joined lobby with ID:', payload);
                     this.lobbyId = payload.lobbyId;
                     this.lobbyName = payload.lobbyName;
+
+                    this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers  });
                     break;
                 case 'lobby_update':
                     console.log('Lobby update:', payload);
+
+                    if("steam" in payload){
+                        console.log("yes")
+                        this.notifyRenderer("update-lobby-games", payload)
+                    }
                     break;
                 case 'lobby_left':
                     console.log('Left lobby:', payload);
@@ -110,7 +120,6 @@ class LobbyClient {
     }
 
     getLobbyInfo() {
-
         return { lobbyId: this.lobbyId, lobbyName: this.lobbyName }; 
     }   
 

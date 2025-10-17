@@ -8,7 +8,7 @@ class EpicGames{
     }
 
     checkEpicGameInstallationStatus(){
-        try {    
+        try {
             if (!fs.existsSync(path.join(__dirname, 'games.sqlite'))) {
                 console.warn("Epic games database not found.");
                 return;

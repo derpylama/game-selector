@@ -158,6 +158,17 @@ window.electronAPI.loadedSettings((settings) => {
 window.electronAPI.lobbyUpdate((lobbyInfo) => {
     console.log("Lobby Info Updated:", lobbyInfo);
     //document.getElementById("currentLobbyInfo").innerText = `Lobby ID: ${lobbyInfo.lobbyId}, Lobby Name: ${lobbyInfo.lobbyName}`;
+
+    var lobbyInfoCon = document.getElementById("lobbyInfo");
+
+    var lobbyName = document.createElement("h2");
+    lobbyName.innerText = lobbyInfo.lobbyName;
+
+    var lobbyID = document.createElement("h4");
+    lobbyID.innerText = "Lobby id: " + lobbyInfo.lobbyId;
+
+    lobbyInfoCon.appendChild(lobbyName);
+    lobbyInfoCon.appendChild(lobbyID);
 });
 
 document.getElementById("createLobbyButton").addEventListener("click", () => {
@@ -178,5 +189,8 @@ document.getElementById("leaveLobbyButton").addEventListener("click", () => {
     console.log("Leave Lobby button clicked");
 
     window.electronAPI.leaveLobby();
-
 });
+
+window.electronAPI.updateLobbyGames((games) => {
+    console.log(games)
+})

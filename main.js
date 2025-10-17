@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('node:path');
 const fs = require('fs');
 const database = require("sqlite3");
@@ -10,7 +10,7 @@ const epicGames = require('./js/epic');
 const settings = require('./js/settings');
 const webSocket = require('ws');
 const lobbyClient = require('./js/websockethandler');
-const { asyncWrapProviders } = require('node:async_hooks');
+
 
 var steamLibraryFile; 
 var Steam;
@@ -295,7 +295,7 @@ async function getAllGamesFromDb() {
                 reject(err);
                 return;
             }
-            db.all("SELECT * FROM epicGames", (err, epicRows) => {
+            db.all("SELECT title,app_name,thumbnail_url,is_installed FROM epicGames", (err, epicRows) => {
                 if (err) {
                     console.error("Database error (epic):", err);
                     reject(err);
@@ -310,33 +310,35 @@ async function getAllGamesFromDb() {
     });
 }
 
-ipcMain.on('connect-to-server',  (event) => {
+ipcMain.on('connect-to-server', async (event) => {
 
     var ip = Settings.getSetting("backendIP");
     var port = Settings.getSetting("backendPort");
+    
+    await getAllGamesFromDb().then(games => {
 
-    LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken, "mupp");
+        LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken, "mupp");
+    
+        if (authToken) {
+            LobbyClient.connect(games);
+            
+        } else {
+            console.error("Cannot connect to server: No auth token available.");
+        }
 
-    if (authToken) {
-        LobbyClient.connect();
-        
-    } else {
-        console.error("Cannot connect to server: No auth token available.");
-    }
+    }).catch(err => {
+        console.error("Failed to retrieve games from database:", err);
+    });
 });
 
 ipcMain.on("create-lobby", async (event, lobbyName) => {
     console.log("Creating lobby...");
 
-    await getAllGamesFromDb().then(games => {
-        if (LobbyClient) {
-            LobbyClient.sendAction("create_lobby", { lobbyName: "Test Lobby", games: games });
-        } else {
-            console.error("LobbyClient is not initialized.");
-        }
-    }).catch(err => {
-        console.error("Failed to retrieve games from database:", err);
-    });
+    if (LobbyClient) {
+        LobbyClient.sendAction("create_lobby", { lobbyName: "Test Lobby" });
+    } else {
+        console.error("LobbyClient is not initialized.");
+    }
 
 });
 
