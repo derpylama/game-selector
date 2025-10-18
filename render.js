@@ -61,8 +61,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("content-games").style.display = "block";
 
     window.electronAPI.getAllGames().then(games => {
-        console.log(games.epicGames);
-        console.log(games.steamGames);
+
         var gamesList = document.getElementById("gamesList");
         games.epicGames.forEach(game => {
             var gameCard = document.createElement("div");
@@ -157,9 +156,12 @@ window.electronAPI.loadedSettings((settings) => {
 
 window.electronAPI.lobbyUpdate((lobbyInfo) => {
     console.log("Lobby Info Updated:", lobbyInfo);
-    //document.getElementById("currentLobbyInfo").innerText = `Lobby ID: ${lobbyInfo.lobbyId}, Lobby Name: ${lobbyInfo.lobbyName}`;
 
     var lobbyInfoCon = document.getElementById("lobbyInfo");
+
+    while(lobbyInfoCon.firstChild){
+        lobbyInfoCon.removeChild(lobbyInfoCon.firstChild);
+    }
 
     var lobbyName = document.createElement("h2");
     lobbyName.innerText = lobbyInfo.lobbyName;
@@ -167,8 +169,17 @@ window.electronAPI.lobbyUpdate((lobbyInfo) => {
     var lobbyID = document.createElement("h4");
     lobbyID.innerText = "Lobby id: " + lobbyInfo.lobbyId;
 
+    var lobbyClients = document.createElement("h5");
+    lobbyClients.innerText = "Lobby members: \n";
+
+    lobbyInfo.members.forEach((member) => {
+        lobbyClients.innerText += member.userName + "\n";
+    })
+
     lobbyInfoCon.appendChild(lobbyName);
     lobbyInfoCon.appendChild(lobbyID);
+
+    lobbyInfoCon.appendChild(lobbyClients)
 });
 
 document.getElementById("createLobbyButton").addEventListener("click", () => {
@@ -192,5 +203,140 @@ document.getElementById("leaveLobbyButton").addEventListener("click", () => {
 });
 
 window.electronAPI.updateLobbyGames((games) => {
-    console.log(games)
+
+    var gamesList = document.getElementById("lobbyGames");
+
+    games.epic.forEach((gameInfo) => {
+        let anyInstalled = false;
+
+        var gameCard = document.createElement("div");
+
+        gameCard.classList = "gameCard";
+        
+        gameCard.innerHTML = `
+            <img src="${gameInfo.game.thumbnail_url}" alt="${gameInfo.game.title} Thumbnail" class="gameThumbnail">
+            <div class="gameInfo">
+                <h3>${gameInfo.game.title}</h3>
+
+            </div>
+        `;
+
+        var installDiv = document.createElement("div");
+        installDiv.classList = "installationStatus";
+
+        gameInfo.owners.forEach((owner) => {
+
+            if(owner.installed){
+                    anyInstalled = true;
+
+                if(!document.getElementById("installMessage")){
+                    var installMsg = document.createElement("h5");
+                    
+                    installMsg.innerText = "Have it installed:";
+
+                    installDiv.appendChild(installMsg);
+                }
+
+                var user = document.createElement("p");
+                user.innerText = owner.username;
+
+                installDiv.appendChild(user);
+            }
+            else {
+                // Mark card visually if not installed
+                gameCard.classList.add("notInstalled");
+            }
+        })
+    
+        // After checking all owners
+        if (!anyInstalled) {
+            gameCard.classList.add("notInstalled");
+        }
+    
+        gameCard.appendChild(installDiv);
+        gamesList.appendChild(gameCard);
+        
+    });
+
+    games.steam.forEach((gameInfo) => {
+        let anyInstalled = false;
+        var gameCard = document.createElement("div");
+
+        gameCard.classList = "gameCard";
+                
+        gameCard.innerHTML = `
+            <img src="https://media.steampowered.com/steamcommunity/public/images/apps/${gameInfo.game.steam_id}/${gameInfo.game.img_icon_url}.jpg" alt="${gameInfo.game.name} Thumbnail" class="gameThumbnail">
+            <div class="gameInfo">
+                <h3>${gameInfo.game.name}</h3>
+            </div>
+        `;
+
+        var installDiv = document.createElement("div");
+        installDiv.classList = "installationStatus";
+
+        gameInfo.owners.forEach((owner) => {
+
+            if(owner.installed){
+                    anyInstalled = true;
+
+                if(!document.getElementById("installMessage")){
+                    var installMsg = document.createElement("h5");
+                    
+                    installMsg.innerText = "Have it installed:";
+
+                    installDiv.appendChild(installMsg);
+                }
+
+                var user = document.createElement("p");
+                user.innerText = owner.username;
+
+                installDiv.appendChild(user);
+            }
+            else {
+                // Mark card visually if not installed
+                gameCard.classList.add("notInstalled");
+            }
+        })
+    
+        // After checking all owners
+        if (!anyInstalled) {
+            gameCard.classList.add("notInstalled");
+        }
+
+        gameCard.appendChild(installDiv);
+        gamesList.appendChild(gameCard)
+    })
+
+    document.querySelectorAll('.gameCard img').forEach(img => {
+        img.onload = function() {
+        if (img.naturalWidth > img.naturalHeight) {
+            img.classList.add('landscape-img');
+            img.classList.remove('portrait-img');
+        } else {
+            img.classList.add('portrait-img');
+            img.classList.remove('landscape-img');
+        }
+    }});
+
+
+})
+const loadingOverlay = document.getElementById("loadingOverlay");
+
+window.electronAPI.progressOverlay((status) => {
+    const progressBar = document.getElementById("progressBar");
+    const statusText = document.getElementById("statusText");
+    
+    loadingOverlay.style.display = "flex";
+    progressBar.style.transition = 'width 0.1s linear'; 
+
+    var precent = Math.round((status.processed / status.total) * 100);
+    progressBar.value = precent;
+
+    console.log(precent)
+    statusText.innerText = status.message;
+
+})
+
+window.electronAPI.progressOverlayComplete(() => {
+    loadingOverlay.style.display = "none"
 })

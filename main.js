@@ -19,8 +19,13 @@ var Settings;
 var LobbyClient;
 var authToken = null;
 var win;
+var legendaryPath;
 
-const dbPath = path.join(__dirname, 'games.sqlite');
+const baseDir = app.isPackaged
+  ? app.getPath('userData')               // packaged app
+  : path.join(__dirname);                 // dev mode
+
+const dbPath = path.join(baseDir, 'games.sqlite');
 exports.dbPath = dbPath;
 
 function createWindow() {
@@ -35,7 +40,49 @@ function createWindow() {
   });
 
   win.loadFile('main.html');
-  win.webContents.openDevTools();
+}
+
+function getLegendaryPath() {
+  const platform = process.platform;
+  let legendaryPath;
+
+  if (platform === 'win32') {
+
+    const basePath = app.isPackaged
+      ? path.join(process.resourcesPath, 'resources') // in packaged app
+      : path.join(__dirname, 'resources');            // in dev
+    // Windows: path to precompiled exe inside resources
+    legendaryPath = path.join(basePath, 'legendary_windows.exe');
+    // check existence
+    if (!fs.existsSync(legendaryPath)) {
+      throw new Error(`Legendary binary not found at ${legendaryPath}`);
+    }
+  } else if (platform === 'linux' || platform === 'darwin') {
+    // Linux/macOS: assume it's in PATH or optionally bundle a binary
+    legendaryPath = 'legendary'; // user must have installed CLI
+  }
+
+
+  return legendaryPath;
+}
+
+function checkLegendaryCommand(){
+  try {
+    execSync("legendary --version", { stdio: 'pipe' });
+    return true; // Legendary is available
+  } catch (error) {
+    dialog.showMessageBoxSync({
+      type: 'error',
+      buttons: ['Open Installation Guide', 'Close'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Legendary CLI Not Found',
+      message: 'Legendary CLI is required to import and manage Epic Games.',
+      detail: 'You can install it with:\n\npip install legendary-gl\n\nor follow the setup guide.',
+    });
+
+    return false; // Legendary is not installed
+  }
 }
 
 function openSteamLogin(mainWindow) {
@@ -62,24 +109,34 @@ function openSteamLogin(mainWindow) {
   });
 }   
 app.whenReady().then(async () => {
-    InitDb();
+   try {
+        await InitDb(); // Wait for database to initialize
+        createWindow();
 
-    Steam = new steam();
-    EpicGames = new epicGames();
-    Settings = new settings();
-
-    steamLibraryFile = Steam.steamLibraryFile;
-    EpicGames.checkEpicGameInstallationStatus();
+        EpicGames = new epicGames();
+        Settings = new settings();
+        Steam = new steam();
+        
+        steamLibraryFile = Steam.steamLibraryFile;
+        
+        await EpicGames.checkEpicGameInstallationStatus(); // Wait for completion
+        
+        legendaryPath = getLegendaryPath();
+        
+        console.log("All initialization complete ✅");
+        
+        win.webContents.on('did-finish-load', () => {
+            win.webContents.send("loaded-settings", {
+                epicGamesLibraryFolders: Settings.getSetting("epicGamesLibraryFolders"),
+                backendIP: Settings.getSetting("backendIP"),
+                backendPort: Settings.getSetting("backendPort")
+            });
+        })
+    } catch (err) {
+        console.error("Error during initialization:", err);
+    }
     
-    createWindow();
-
-    win.webContents.on('did-finish-load', () => {
-        win.webContents.send("loaded-settings", {
-            epicGamesLibraryFolders: Settings.getSetting("epicGamesLibraryFolders"),
-            backendIP: Settings.getSetting("backendIP"),
-            backendPort: Settings.getSetting("backendPort")
-        });
-    })
+    
 })
 
 ipcMain.on('open-steam-login', (event) => {
@@ -104,7 +161,7 @@ if (!authToken) {
     const data = await res.json();
 
     // Log full data for debugging
-    console.log("Full owned games response:", JSON.stringify(data, null, 2));
+    //console.log("Full owned games response:", JSON.stringify(data, null, 2));
 
     // Reply to renderer
     event.reply("owned-games-response", data);
@@ -116,7 +173,7 @@ if (!authToken) {
 });
 
 
-function InitDb(){
+async function InitDb(){
     db = new database.Database(dbPath, (err) =>{
         if (err) {
             console.error('Error opening database:', err.message);
@@ -141,7 +198,7 @@ function InitDb(){
         is_installed INTEGER NOT NULL DEFAULT 0,
         install_location TEXT NOT NULL
     )`)
-    
+    return;
 }
 
 ipcMain.on("save-steam-games", (event, games) => {
@@ -188,6 +245,10 @@ ipcMain.handle('get-all-games', async () => {
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
     if (!gameFolders || gameFolders.length === 0) {
       return { success: false, message: 'No folders provided' };
+    }
+
+    if (!checkLegendaryCommand()) {
+    return { success: false, message: 'Legendary CLI not found' };
     }
     
     const output = execSync('legendary list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
@@ -332,10 +393,10 @@ ipcMain.on('connect-to-server', async (event) => {
 });
 
 ipcMain.on("create-lobby", async (event, lobbyName) => {
-    console.log("Creating lobby...");
+    console.log("Creating lobby...", lobbyName);
 
     if (LobbyClient) {
-        LobbyClient.sendAction("create_lobby", { lobbyName: "Test Lobby" });
+        LobbyClient.sendAction("create_lobby", { lobbyName: lobbyName });
     } else {
         console.error("LobbyClient is not initialized.");
     }

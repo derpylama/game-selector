@@ -44,11 +44,10 @@ class LobbyClient {
                     // Wait for connection to be open before joining
                     if (this.socket.readyState === WebSocket.OPEN) {
                         this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
-                        //this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers  });
                     } else {
                         this.socket.once('open', () => {
                             this.sendAction('join_lobby', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
-                            //this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers });
+                            
                         });
                     }
                     break;
@@ -60,10 +59,9 @@ class LobbyClient {
                     this.notifyRenderer('update-lobby-info', { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers  });
                     break;
                 case 'lobby_update':
-                    console.log('Lobby update:', payload);
+                    console.log('Lobby update:');
 
                     if("steam" in payload){
-                        console.log("yes")
                         this.notifyRenderer("update-lobby-games", payload)
                     }
                     break;

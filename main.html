@@ -6,6 +6,14 @@
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
+
+    <div id="loadingOverlay" style="display: none;">
+        <div class="loadingOverlayContent">
+            <p id="statusText">Loading...</p>
+            <progress id="progressBar" max="100" value="0"></progress>
+        </div>
+    </div>
+
     <menu>
         <div id="menu-games">Games</div>
         <div id="menu-lobbys">Lobbys</div>
@@ -50,6 +58,10 @@
 
             <div id="lobbyInfo">
                 
+            </div>
+
+            <div id="lobbyGames">
+
             </div>
 
         </div>

@@ -2,69 +2,54 @@ const database = require("sqlite3");
 const os = require("os");
 const path = require("node:path");
 const fs = require("fs");
+const { BrowserWindow } = require("electron");
 
 class Steam {
     constructor(){
         this.steamLibraryFile = this.getDefualtSteamLibraryFile()
+        this.win = BrowserWindow.getAllWindows()[0];
     }
 
     saveSteamGamesToDb(games){
-        if (!games || !Array.isArray(games["games"])) {
-            console.warn("No games to save or invalid response:", data);
+        
+        if (!games || !Array.isArray(games.games)) {
+            console.warn("No games to save or invalid response:", games);
             return;
         }
-        var installedGames = this.parseVDF();
+        const total = games.games.length;
+        var processed = 0;
 
         const stmt = db.prepare(`
             INSERT OR REPLACE INTO steamGames (name, steam_id, img_icon_url)
             VALUES (?, ?, ?)
         `);
 
-        const installedAppIds = new Set();
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
 
-        for (const [key, value] of Object.entries(installedGames["libraryfolders"])) {
-            if (!/^\d+$/.test(key)) continue; // only real library folders
-            const apps = value["apps"] || {};
-            for (const appId of Object.keys(apps)) {
-                installedAppIds.add(appId);
+            for (const game of games.games) {
+                stmt.run(game.name, game.appid, game.img_icon_url);
+                processed++;
+                this.win.webContents.send("progress-overlay", { processed, total , message: "Importing Steam games"} );
+                //if (err) console.error(`Error inserting ${game.name}:`, err);
             }
-        }
 
-        // Now check owned games
-        let pending = games["games"].length;
+            db.run("COMMIT", (err) => {
+                if (err) console.error("Transaction commit error:", err);
+                else console.log("All Steam games inserted/updated successfully ✅");
 
-        games["games"].forEach((game) => {
-            db.get("SELECT 1 FROM steamGames WHERE steam_id = ?", [game["appid"]], (err, row) => {
-                if (err) {
-                    console.error("Database error:", err);
-                    pending--;
-                    if (pending === 0) stmt.finalize();
-                    return;
-                }
-                if (!row) {
-                    stmt.run(game["name"], game["appid"], game["img_icon_url"], (err) => {
-                        if (err) {
-                            console.error("Error inserting game:", err);
-                        } else {
-                            console.log(`Inserted game: ${game["name"]}`);
-                        }
-                        pending--;
-                        if (pending === 0) stmt.finalize();
-                    });
-                } else {
-                    pending--;
-                    if (pending === 0) stmt.finalize();
-                }
+                stmt.finalize();
+
+                this.win.webContents.send("progress-overlay-complete", {message: "finished importing Steam games"});
             });
         });
 
+        // Update installation status after inserting
         this.checkSteamGameInstallationStatus();
 
     }
-        
-
-
-
+    
+    //Gets steam library.vdf file path based on what os is running
     getDefualtSteamLibraryFile(){
         if (process.platform === "win32"){
             var steamLibraryFile = path.join(
@@ -117,7 +102,6 @@ class Steam {
 
     checkSteamGameInstallationStatus(){
         var installedGames = this.parseVDF();
-        //var getInstalledGames = db.prepare(`SELECT name, steam_id FROM steamGames`);
         
         const installedAppIds = new Set();
 
@@ -129,34 +113,27 @@ class Steam {
             }
         }
 
-        db.all(`SELECT name, steam_id FROM steamGames`, (err, rows) => {
-            if (err) {
-                console.error("Database error:", err);
-                return;
-            }
+                // Bulk update using a single transaction
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
 
-            rows.forEach(row => {
-                if (!installedAppIds.has(String(row.steam_id))) {
-                    // Mark as uninstalled
-                    var markAsUninstalled = db.prepare(`UPDATE steamGames SET is_installed = 0 WHERE steam_id = ?`);
-                    markAsUninstalled.run(row.steam_id, (err) => {
-                        if (err) {
-                            console.error("Error updating game status:", err);
-                        } else {
-                            console.log(`Marked ${row.name} as uninstalled in database.`);
-                        }
-                    });
-                    markAsUninstalled.finalize();
-                } else {
-                    // Mark as installed
-                    var markAsInstalled = db.prepare(`UPDATE steamGames SET is_installed = 1 WHERE steam_id = ?`);
-                    markAsInstalled.run(row.steam_id, (err) => {
-                        if (err) {
-                            console.error("Error updating game status:", err);
-                        }
-                    });
-                    markAsInstalled.finalize();
-                }
+            // Mark installed
+            db.run(
+                `UPDATE steamGames SET is_installed = 1 WHERE steam_id IN (${[...installedAppIds].map(() => "?").join(",")})`,
+                [...installedAppIds],
+                (err) => { if (err) console.error("Error marking installed games:", err); }
+            );
+
+            // Mark uninstalled
+            db.run(
+                `UPDATE steamGames SET is_installed = 0 WHERE steam_id NOT IN (${[...installedAppIds].map(() => "?").join(",")})`,
+                [...installedAppIds],
+                (err) => { if (err) console.error("Error marking uninstalled games:", err); }
+            );
+
+            db.run("COMMIT", (err) => {
+                if (err) console.error("Transaction commit error:", err);
+                else console.log("Steam installation status updated ✅");
             });
         });
         

@@ -4,37 +4,44 @@ const sqlite3 = require('sqlite3');
 
 class EpicGames{
     constructor(){
-
+        
     }
 
-    checkEpicGameInstallationStatus(){
+    async checkEpicGameInstallationStatus(){
         try {
-            if (!fs.existsSync(path.join(__dirname, 'games.sqlite'))) {
-                console.warn("Epic games database not found.");
-                return;
-            }
-            var getInstalledGames = db.prepare(`SELECT app_name, install_location FROM epicGames WHERE is_installed = 1`);
-            getInstalledGames.all((err, rows) => {
-                if (err) {
-                    console.error("Database error:", err);
-                    return;
-                }
-                rows.forEach(row => {
-                    if (!fs.existsSync(row.install_location)) {
-                        console.log(`Game at ${row.install_location} not found. Updating database.`);
-                        var markAsUninstalled = db.prepare(`UPDATE epicGames SET is_installed = 0, install_location = '' WHERE app_name = ?`);
-                        markAsUninstalled.run(row.app_name, (err) => {
-                            if (err) {
-                                console.error("Error updating game status:", err);
-                            } else {
-                                console.log(`Marked ${row.app_name} as uninstalled.`);
-                            }
-                        });
-                        markAsUninstalled.finalize();
-                    }
+            const dbPath = path.join(process.cwd(), 'games.sqlite');
+            if (!fs.existsSync(dbPath)) return;
+
+            // Wrap the all() method in a promise to use async/await
+            const rows = await new Promise((resolve, reject) => {
+                db.all(`SELECT app_name, install_location FROM epicGames WHERE is_installed = 1`, (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+
                 });
             });
-            getInstalledGames.finalize();
+            
+            for (const row of rows) {
+                if (!fs.existsSync(row.install_location)) {
+                    //console.log(`Game at ${row.install_location} not found. Updating database.`);
+
+                    await new Promise((resolve, reject) => {
+                        db.run(
+                            `UPDATE epicGames SET is_installed = 0, install_location = '' WHERE app_name = ?`,
+                            [row.app_name],
+                            (err) => {
+                                if (err) reject(err);
+                                else {
+                                    //console.log(`Marked ${row.app_name} as uninstalled.`);
+                                    resolve();
+                                }
+                            }
+                        );
+                    });
+                }
+            }
+
+            
         } catch (error) {
             console.error("Error checking Epic game installation status:", error);
         }
