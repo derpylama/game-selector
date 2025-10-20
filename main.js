@@ -8,7 +8,6 @@ const fileTools = require('./js/filetools');
 const steam = require('./js/steam');
 const epicGames = require('./js/epic');
 const settings = require('./js/settings');
-const webSocket = require('ws');
 const lobbyClient = require('./js/websockethandler');
 
 
@@ -112,6 +111,7 @@ app.whenReady().then(async () => {
    try {
         await InitDb(); // Wait for database to initialize
         createWindow();
+        legendaryPath = getLegendaryPath();
 
         EpicGames = new epicGames();
         Settings = new settings();
@@ -121,7 +121,6 @@ app.whenReady().then(async () => {
         
         await EpicGames.checkEpicGameInstallationStatus(); // Wait for completion
         
-        legendaryPath = getLegendaryPath();
         
         console.log("All initialization complete ✅");
         
@@ -251,7 +250,7 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     return { success: false, message: 'Legendary CLI not found' };
     }
     
-    const output = execSync('legendary list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    const output = execSync( legendaryPath + ' list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
     
     // Parse the JSON string into a JS object
     const games = JSON.parse(output);
