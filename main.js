@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('fs');
 const database = require("sqlite3");
 const os = require("os");
-const { execSync, spawn } = require('child_process');
+const { exec, execSync , spawn } = require('child_process');
 const fileTools = require('./js/filetools');
 const steam = require('./js/steam');
 const EpicGames = require('./js/epic');
@@ -249,15 +249,15 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     return { success: false, message: 'Legendary CLI not found' };
     }
 
-    try{
-        execSync(legendaryPath + " list", { stdio: 'ignore' })
+    const authStatus = await tryFetchGames()
+
+    if(authStatus === "AUTH_REQUIRED"){
+        console.log("auth needed")
+
     }
-    catch(error){
-        const userChoice = await showAlert(["auth", "cancel"], "Your epic games is not authenticated. Please click auth if you want this app to be able to handle what games you own on epic games", "error")
-        console.log(userChoice)
-        if(userChoice === 0){
-            await legendaryAuth()
-        }
+    else{
+        epicGames.importGames(gameFolders)
+
     }
     
     //const output = execSync( legendaryPath + ' list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
@@ -266,7 +266,6 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     //const games = JSON.parse(output);
 
 
-    epicGames.importGames(gameFolders)
 
     /*
     // read the gameFolders content and iterate over them an log them
@@ -416,12 +415,24 @@ async function showAlert(buttons, message, type){
     return result.response;
 }
 
+//tries and check if the user is logged in on legendary
+async function tryFetchGames() {
+return new Promise((resolve, reject) => {
+        exec(`${legendaryPath} list --json`, {maxBuffer: 10 * 1024 * 1024}, (error, stdout, stderr) => {
+            if (error) {
+                // check if the error is authentication-related
+                if (stderr.toLowerCase().includes("no saved credentials") || stderr.toLowerCase().includes("not logged in")) {
+                    return resolve("AUTH_REQUIRED");
+                }
+                return reject(error);
+            }
 
-async function legendaryAuth() {
-    try{
-        execSync(legendaryPath + " auth")
-    }
-    catch(error){
-
-    }
+            try {
+                const games = JSON.parse(stdout);
+                resolve(games);
+            } catch (parseError) {
+                reject(parseError);
+            }
+        });
+    });
 }
