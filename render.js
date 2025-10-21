@@ -130,8 +130,9 @@ window.addEventListener('DOMContentLoaded', () => {
     })
 
     document.getElementById("connectButton").addEventListener("click", () => {
-        window.electronAPI.connectToServer();
-
+        const Username = document.getElementById("username")
+        
+        window.electronAPI.connectToServer(Username.value);
     })
 
     

@@ -7,6 +7,16 @@
 </head>
 <body>
 
+    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+        <div style="background:#171e25; padding:20px; border-radius:10px; text-align:center;">
+            <p>Paste the auth code you received from the browser:</p>
+            <input type="text" id="authCodeInput" style="width:300px; padding:5px;">
+            <br><br>
+            <button id="submitAuthCode">Submit</button>
+            <button id="cancelAuthCode">Cancel</button>
+        </div>
+    </div>
+
     <div id="loadingOverlay" style="display: none;">
         <div class="loadingOverlayContent">
             <p id="statusText">Loading...</p>

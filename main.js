@@ -1,24 +1,25 @@
-const { app, BrowserWindow, dialog, ipcMain} = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell} = require('electron');
 const path = require('node:path');
 const fs = require('fs');
 const database = require("sqlite3");
 const os = require("os");
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const fileTools = require('./js/filetools');
 const steam = require('./js/steam');
-const epicGames = require('./js/epic');
+const EpicGames = require('./js/epic');
 const settings = require('./js/settings');
 const lobbyClient = require('./js/websockethandler');
 
 
 var steamLibraryFile; 
 var Steam;
-var EpicGames;
+var epicGames;
 var Settings;
 var LobbyClient;
 var authToken = null;
 var win;
 var legendaryPath;
+var db;
 
 const baseDir = app.isPackaged
   ? app.getPath('userData')               // packaged app
@@ -113,13 +114,13 @@ app.whenReady().then(async () => {
         createWindow();
         legendaryPath = getLegendaryPath();
 
-        EpicGames = new epicGames();
+        epicGames = new EpicGames(dbPath, legendaryPath, db);
         Settings = new settings();
         Steam = new steam();
         
         steamLibraryFile = Steam.steamLibraryFile;
         
-        await EpicGames.checkEpicGameInstallationStatus(); // Wait for completion
+        await epicGames.checkEpicGameInstallationStatus(); // Wait for completion
         
         
         console.log("All initialization complete ✅");
@@ -242,59 +243,32 @@ ipcMain.handle('get-all-games', async () => {
 });
 
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
-    if (!gameFolders || gameFolders.length === 0) {
-        console.log("no folders provided");
-      return { success: false, message: 'No folders provided' };
-    }
+
 
     if (!checkLegendaryCommand()) {
     return { success: false, message: 'Legendary CLI not found' };
     }
+
+    try{
+        execSync(legendaryPath + " list", { stdio: 'ignore' })
+    }
+    catch(error){
+        const userChoice = await showAlert(["auth", "cancel"], "Your epic games is not authenticated. Please click auth if you want this app to be able to handle what games you own on epic games", "error")
+        console.log(userChoice)
+        if(userChoice === 0){
+            await legendaryAuth()
+        }
+    }
     
-    const output = execSync( legendaryPath + ' list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    //const output = execSync( legendaryPath + ' list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
     
     // Parse the JSON string into a JS object
-    const games = JSON.parse(output);
+    //const games = JSON.parse(output);
 
-    // prepare the sql statement to add all owned games to the database
-    var saveOwnedGamesToDb = db.prepare(`
-        INSERT OR IGNORE INTO epicGames (title, app_name, install_location, thumbnail_url)
-        VALUES (?, ?, ?, ?)
-    `)
 
-    let pending = games.length;
-    
-    // iterate over all games and add them to the database if they don't exist yet
-    games.forEach(game => {
-        db.get("SELECT 1 FROM epicGames WHERE app_name = ?", [game["app_name"]], (err, row) => {
-            if (err) {
-                console.error("Database error:", err);
-            }
-            if (!row) {
-                var imageUrl = "";
-                if (game["metadata"] && game["metadata"]["keyImages"] && game["metadata"]["keyImages"].length > 1) {
-                    imageUrl = game["metadata"]["keyImages"][1]["url"];
-                }
-                saveOwnedGamesToDb.run(game["app_title"], game["app_name"], "", imageUrl, (err) => {
-                    if (err) {
-                        console.error("Error inserting game:", err);
-                    } else {
-                        console.log(`Inserted game: ${game["app_title"]}`);
-                    }
-                    pending--;
-                    if (pending === 0) saveOwnedGamesToDb.finalize();
-                });
-            } else {
-                pending--;
-                if (pending === 0) saveOwnedGamesToDb.finalize();
-            }
-        });
-    });
+    epicGames.importGames(gameFolders)
 
-    var addInstalledGamesToDb = db.prepare(`
-        UPDATE epicGames SET is_installed = 1, install_location = ? WHERE app_name = ?
-    `)
-
+    /*
     // read the gameFolders content and iterate over them an log them
     gameFolders.forEach(folder => {
         if (!fs.existsSync(folder)) {
@@ -329,7 +303,7 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
                 }
             })
         }
-    });
+    });*/
 });
 
 ipcMain.handle('save-settings', (event, settings) => {
@@ -371,20 +345,27 @@ async function getAllGamesFromDb() {
     });
 }
 
-ipcMain.on('connect-to-server', async (event) => {
+ipcMain.on('connect-to-server', async (event, username) => {
 
     var ip = Settings.getSetting("backendIP");
     var port = Settings.getSetting("backendPort");
     
-    await getAllGamesFromDb().then(games => {
-
-        LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken, "mupp");
-    
-        if (authToken) {
-            LobbyClient.connect(games);
+    await getAllGamesFromDb().then(async games => {
+        
+        if(username.trim() === ""){
+            showAlert(["Ok"], "Please enter a username before connecting to server", 'info');
             
-        } else {
-            console.error("Cannot connect to server: No auth token available.");
+        }
+        else{
+            LobbyClient = new lobbyClient("ws://" + ip + ":" + port + "?token=" + authToken, username);
+        
+            if (authToken) {
+                LobbyClient.connect(games);
+                
+            } else {
+                console.error("Cannot connect to server: No auth token available.");
+            }
+            
         }
 
     }).catch(err => {
@@ -421,3 +402,26 @@ ipcMain.on("leave-lobby", (event) => {
         console.error("LobbyClient is not initialized.");
     }
 });
+
+
+async function showAlert(buttons, message, type){
+    const result = await dialog.showMessageBox({
+        type: type,
+        buttons: buttons,
+        message: message,
+        defaultId: 0,
+        cancelId: 1,
+    })
+
+    return result.response;
+}
+
+
+async function legendaryAuth() {
+    try{
+        execSync(legendaryPath + " auth")
+    }
+    catch(error){
+
+    }
+}

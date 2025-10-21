@@ -4,7 +4,7 @@
   "description": "A collaborative way for friends to be able to choose games to play together",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --trace-warnings",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "mupp",

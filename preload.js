@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getAllGames: () => ipcRenderer.invoke('get-all-games'),
     renderGames: (callback) => ipcRenderer.on('render-games', (event, allGames) => callback(allGames)),
     saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
-    connectToServer: () => ipcRenderer.send('connect-to-server'),
+    connectToServer: (username) => ipcRenderer.send('connect-to-server', username),
     loadedSettings: (callback) => ipcRenderer.on('loaded-settings', (event, settings) => callback(settings)),
     createLobby: (lobbyName) => ipcRenderer.send('create-lobby', lobbyName),
     joinLobby: (lobbyId) => ipcRenderer.send('join-lobby', lobbyId),
