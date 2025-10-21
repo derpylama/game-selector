@@ -249,6 +249,7 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
     return { success: false, message: 'Legendary CLI not found' };
     }
 
+    // MARK: add auth for when tryFetchGames returns AUTH REQUIRED
     const authStatus = await tryFetchGames()
 
     if(authStatus === "AUTH_REQUIRED"){
