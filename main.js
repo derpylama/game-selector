@@ -51,7 +51,7 @@ function getLegendaryPath() {
       ? path.join(process.resourcesPath, 'resources') // in packaged app
       : path.join(__dirname, 'resources');            // in dev
     // Windows: path to precompiled exe inside resources
-    legendaryPath = path.join(basePath, 'legendary_windows.exe');
+    legendaryPath = path.join(basePath, 'legendary.exe');
     // check existence
     if (!fs.existsSync(legendaryPath)) {
       throw new Error(`Legendary binary not found at ${legendaryPath}`);
@@ -67,7 +67,7 @@ function getLegendaryPath() {
 
 function checkLegendaryCommand(){
   try {
-    execSync("legendary --version", { stdio: 'pipe' });
+    execSync(legendaryPath + " --version", { stdio: 'pipe' });
     return true; // Legendary is available
   } catch (error) {
     dialog.showMessageBoxSync({
@@ -243,6 +243,7 @@ ipcMain.handle('get-all-games', async () => {
 
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
     if (!gameFolders || gameFolders.length === 0) {
+        console.log("no folders provided");
       return { success: false, message: 'No folders provided' };
     }
 
