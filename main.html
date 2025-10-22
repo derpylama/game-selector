@@ -78,19 +78,24 @@
         </div>
 
         <div id="content-settings" class="content-section" style="display:none;">
-            Settings Content
 
-            <input type="text" id="serverAddress" placeholder="Server Address" value="">
-            <input type="text" id="serverPort" placeholder="Server Port" value="">
-            <button id="saveSettingsButton">Save Settings</button>
+            <div id="settings-container">
+                <label for="serverAddress">Server IP:</label>
+                <input type="text" id="serverAddress" placeholder="Server Address" value="">
+                <label for="serverPort">Server port:</label>
+                <input type="text" id="serverPort" placeholder="Server Port" value="">
+                
+                <label for="epicGamesList">EpicGames installation folders:</label>
+                <ul id="epicGamesList"></ul>
+                <button id="selectFolder">Select Folder</button>
+                <button id="saveSettingsButton">Save Settings</button>
+            </div>
+
 
             <button id="test">Button</button>
             <button id="getOwnedGames">get steam games</button>
 
-            <label title="enter heroic games json">enter heroic games json</label>
-            <button id="selectFolder">Select Folder</button>
-
-            <ul id="epicGamesList"></ul>
+            
 
             <button id="import">load downloaded epic games</button>
 

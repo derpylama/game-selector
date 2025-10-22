@@ -152,3 +152,32 @@ menu div:hover {
     text-align: center;
     min-width: 300px;
 }
+
+#settings-container{
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    background-color: #28333f;
+    padding: 0.5rem;
+    margin: 1rem;
+}
+
+#settings-container input{
+    width: 50%;
+    margin: 0.3rem;
+}
+
+#settings-container button{
+    width: 30%;
+}
+
+#epicGamesList{
+    padding: 0.4rem;
+    margin: 0.5rem;
+    background-color: #0f141a;
+    width: fit-content;
+}
+
+label{
+    margin: 0.4rem;
+}
