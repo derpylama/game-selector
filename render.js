@@ -21,13 +21,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById("selectFolder").addEventListener("click", async () => {
     const folderPath = await window.electronAPI.selectFolder();
-    if (folderPath) {
-      console.log('Selected folder:', folderPath);
-    } else {
-      console.log('Folder selection was canceled.');
-    }
+    if(folderPath.trim() != null){
+        if (folderPath) {
+        console.log('Selected folder:', folderPath);
+        } else {
+        console.log('Folder selection was canceled.');
+        }
 
-    document.getElementById("epicGamesList").innerHTML += `<li>${folderPath}</li>`;
+        document.getElementById("epicGamesList").innerHTML += `<li>${folderPath}</li>`;
+        
+    }
   });
 
     document.getElementById("import").addEventListener("click", async () => {

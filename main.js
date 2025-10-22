@@ -243,8 +243,6 @@ ipcMain.handle('get-all-games', async () => {
 });
 
 ipcMain.handle('import-game', async (event, { gameFolders }) => {
-
-
     if (!checkLegendaryCommand()) {
     return { success: false, message: 'Legendary CLI not found' };
     }
@@ -254,56 +252,13 @@ ipcMain.handle('import-game', async (event, { gameFolders }) => {
 
     if(authStatus === "AUTH_REQUIRED"){
         console.log("auth needed")
+        authLegendary();
 
     }
     else{
         epicGames.importGames(gameFolders)
 
     }
-    
-    //const output = execSync( legendaryPath + ' list-games --json', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
-    
-    // Parse the JSON string into a JS object
-    //const games = JSON.parse(output);
-
-
-
-    /*
-    // read the gameFolders content and iterate over them an log them
-    gameFolders.forEach(folder => {
-        if (!fs.existsSync(folder)) {
-            console.error("Folder does not exist:", folder);
-            return;
-        }
-        const files = fs.readdirSync(folder);
-    
-        console.log("Files in selected folder:", files);
-    
-        var matchedGames = fileTools.matchFoldersToAppName(folder, files, games);
-        console.log(fileTools.getDirectorySize(folder) + " bytes")
-        console.log("Matched games:", matchedGames);
-    
-        if (matchedGames.length > 0){
-            matchedGames.forEach(matchedGame => {
-                
-                try {  
-                    if(fileTools.getDirectorySize(matchedGame.fullPath) > 20000000){ // only import if the folder is larger than 20MB
-                        const importedGames = execSync("legendary import --with-dlcs " + matchedGame.app_name + "  " + matchedGame.fullPath);
-                        addInstalledGamesToDb.run(matchedGame.fullPath ,matchedGame.app_name);
-                    }
-                    else {
-                        console.warn(`Game "${matchedGame.app_name}" folder size is too small, skipping import.`);
-                    }
-                } catch (error) {
-                    if (error.message && error.message.includes("already imported")) {
-                        console.warn(`Game "${matchedGame.app_name}" is already imported.`);
-                    } else {
-                        console.error("Error importing game:", error.message);
-                    }
-                }
-            })
-        }
-    });*/
 });
 
 ipcMain.handle('save-settings', (event, settings) => {
@@ -436,4 +391,11 @@ return new Promise((resolve, reject) => {
             }
         });
     });
+}
+
+async function authLegendary(){
+    
+    if(process.platform === "win32"){
+        exec(legendaryPath + " auth");
+    }
 }
