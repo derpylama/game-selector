@@ -21,7 +21,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById("selectFolder").addEventListener("click", async () => {
     const folderPath = await window.electronAPI.selectFolder();
-    if(folderPath.trim() != null){
+    if(folderPath != null){
         if (folderPath) {
         console.log('Selected folder:', folderPath);
         } else {
