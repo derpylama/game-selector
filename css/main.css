@@ -70,8 +70,7 @@ menu div:hover {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
-    height: 100vh;
+    height: 99vh;
     width: 100%;
 }
 
@@ -156,7 +155,7 @@ menu div:hover {
 #settings-container{
     display: flex;
     flex-direction: column;
-    width: 50%;
+    width: fit-content;
     background-color: #28333f;
     padding: 0.5rem;
     margin: 1rem;
