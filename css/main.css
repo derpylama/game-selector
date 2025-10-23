@@ -65,7 +65,7 @@ menu div:hover {
     display: block;
 }
 
-#gamesList {
+#games-list {
     overflow: auto;
     display: flex;
     flex-wrap: wrap;
@@ -74,7 +74,7 @@ menu div:hover {
     width: 100%;
 }
 
-#lobbyGames {
+#lobby-games {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -131,7 +131,7 @@ menu div:hover {
     max-width: 150px;
 }
 
-#loadingOverlay{
+#loading-overlay{
     position: fixed;       /* Cover entire window */
     top: 0;
     left: 0;
@@ -144,7 +144,7 @@ menu div:hover {
     z-index: 9999;         /* on top of everything */
 }
 
-.loadingOverlayContent{
+.loading-overlay-content{
     background: #171e25;
     padding: 20px;
     border-radius: 10px;
@@ -170,7 +170,7 @@ menu div:hover {
     width: 30%;
 }
 
-#epicGamesList{
+#epic-games-list{
     padding: 0.4rem;
     margin: 0.5rem;
     background-color: #0f141a;
@@ -179,4 +179,16 @@ menu div:hover {
 
 label{
     margin: 0.4rem;
+}
+
+li{
+    padding: 0.3rem;
+}
+
+li:hover{
+    background-color: #28333f;
+}
+
+.li-selected{
+    background-color: #28333f;
 }

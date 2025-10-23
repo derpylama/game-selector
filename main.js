@@ -94,12 +94,13 @@ function openSteamLogin(mainWindow) {
       contextIsolation: true
     }
   });
+  var ip = Settings.getSetting("backendIP");
+  var port = Settings.getSetting("backencPort");
 
-  steamWin.loadURL('http://localhost:3000/auth/steam');
-
+  steamWin.loadURL(`http://${ip}:${port}/auth/steam`);
   // Listen for navigation to success page with token
   steamWin.webContents.on('did-navigate', (event, url) => {
-    if (url.startsWith('http://localhost:3000/auth/steam/success')) {
+    if (url.startsWith(`http://${ip}:${port}/auth/steam/success`)) {
       const token = new URL(url).searchParams.get('token');
       console.log('Token received in main process:', token);
       authToken = token;
@@ -123,7 +124,7 @@ app.whenReady().then(async () => {
         await epicGames.checkEpicGameInstallationStatus(); // Wait for completion
         
         
-        console.log("All initialization complete ✅");
+        console.log("All initialization complete");
         
         win.webContents.on('did-finish-load', () => {
             win.webContents.send("loaded-settings", {
@@ -151,7 +152,11 @@ if (!authToken) {
   }
 
   try {
-    const res = await fetch("http://localhost:3000/api/owned-games", {
+    var ip = Settings.getSetting("backendIP");
+    var port = Settings.getSetting("backencPort");
+    console.log(ip, port)
+
+    const res = await fetch(`http://${ip}:${port}/api/owned-games`, {
       headers: { Authorization: `Bearer ${authToken}` },
     });
 
@@ -159,9 +164,6 @@ if (!authToken) {
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
 
     const data = await res.json();
-
-    // Log full data for debugging
-    //console.log("Full owned games response:", JSON.stringify(data, null, 2));
 
     // Reply to renderer
     event.reply("owned-games-response", data);
@@ -303,7 +305,7 @@ async function getAllGamesFromDb() {
 ipcMain.on('connect-to-server', async (event, username) => {
 
     var ip = Settings.getSetting("backendIP");
-    var port = Settings.getSetting("backendPort");
+    var port = Settings.getSetting("backendPort")++;
     
     await getAllGamesFromDb().then(async games => {
         

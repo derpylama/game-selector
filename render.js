@@ -15,11 +15,11 @@ window.addEventListener('DOMContentLoaded', () => {
     window.electronAPI.saveSteamGamesToDb(games)
   })
 
-  document.getElementById("getOwnedGames").addEventListener("click", () => {
+  document.getElementById("get-owned-games").addEventListener("click", () => {
     window.electronAPI.getOwnedGames();
   })
 
-    document.getElementById("selectFolder").addEventListener("click", async () => {
+    document.getElementById("select-folder").addEventListener("click", async () => {
     const folderPath = await window.electronAPI.selectFolder();
     if(folderPath != null){
         if (folderPath) {
@@ -37,7 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         var gameFolders = [];
 
-        document.getElementById("epicGamesList").childNodes.forEach(folder => {
+        document.getElementById("epic-games-list").childNodes.forEach(folder => {
             gameFolders.push(folder.innerText);
         });
 
@@ -65,7 +65,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     window.electronAPI.getAllGames().then(games => {
 
-        var gamesList = document.getElementById("gamesList");
+        var gamesList = document.getElementById("games-list");
         games.epicGames.forEach(game => {
             var gameCard = document.createElement("div");
             gameCard.className = "gameCard";
@@ -113,18 +113,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
     });
         
-    document.getElementById("saveSettingsButton").addEventListener("click", () => {
+    document.getElementById("save-settings-button").addEventListener("click", () => {
 
         var gameFolders = [];
 
-        document.getElementById("epicGamesList").childNodes.forEach(folder => {
+        document.getElementById("epic-games-list").childNodes.forEach(folder => {
             gameFolders.push(folder.innerText);
         });
 
 
         window.electronAPI.saveSettings(
-            { "backendIP": document.getElementById("serverAddress").value, 
-                "backendPort": document.getElementById("serverPort").value,
+            { "backendIP": document.getElementById("server-address").value, 
+                "backendPort": document.getElementById("server-port").value,
                 "epicGamesLibraries": gameFolders
 
             }
@@ -132,7 +132,7 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log("Settings saved");
     })
 
-    document.getElementById("connectButton").addEventListener("click", () => {
+    document.getElementById("connect-button").addEventListener("click", () => {
         const Username = document.getElementById("username")
         
         window.electronAPI.connectToServer(Username.value);
@@ -144,14 +144,14 @@ window.addEventListener('DOMContentLoaded', () => {
 window.electronAPI.loadedSettings((settings) => {
     console.log(settings);
     if (settings.backendIP) {
-        document.getElementById("serverAddress").value = settings.backendIP;
+        document.getElementById("server-address").value = settings.backendIP;
     }
     if (settings.backendPort) {
-        document.getElementById("serverPort").value = settings.backendPort;
+        document.getElementById("server-port").value = settings.backendPort;
     }
     if (settings.epicGamesLibraryFolders) {
         var folders = JSON.parse(settings.epicGamesLibraryFolders);
-        var epicGamesList = document.getElementById("epicGamesList");
+        var epicGamesList = document.getElementById("epic-games-list");
         folders.forEach(folder => {
             epicGamesList.innerHTML += `<li>${folder}</li>`;
         });
@@ -161,7 +161,7 @@ window.electronAPI.loadedSettings((settings) => {
 window.electronAPI.lobbyUpdate((lobbyInfo) => {
     console.log("Lobby Info Updated:", lobbyInfo);
 
-    var lobbyInfoCon = document.getElementById("lobbyInfo");
+    var lobbyInfoCon = document.getElementById("lobby-info");
 
     while(lobbyInfoCon.firstChild){
         lobbyInfoCon.removeChild(lobbyInfoCon.firstChild);
@@ -186,21 +186,21 @@ window.electronAPI.lobbyUpdate((lobbyInfo) => {
     lobbyInfoCon.appendChild(lobbyClients)
 });
 
-document.getElementById("createLobbyButton").addEventListener("click", () => {
+document.getElementById("create-lobby-button").addEventListener("click", () => {
     console.log("Create Lobby button clicked");
 
-    window.electronAPI.createLobby(document.getElementById("lobbyNameInput").value);
+    window.electronAPI.createLobby(document.getElementById("lobby-name-input").value);
 
 });
 
-document.getElementById("joinLobbyButton").addEventListener("click", () => {
+document.getElementById("join-lobby-button").addEventListener("click", () => {
     console.log("Join Lobby button clicked");
 
-    window.electronAPI.joinLobby(document.getElementById("lobbyIdInput").value);
+    window.electronAPI.joinLobby(document.getElementById("lobby-id-input").value);
 
 });
 
-document.getElementById("leaveLobbyButton").addEventListener("click", () => {
+document.getElementById("leave-lobby-button").addEventListener("click", () => {
     console.log("Leave Lobby button clicked");
 
     window.electronAPI.leaveLobby();
@@ -208,7 +208,7 @@ document.getElementById("leaveLobbyButton").addEventListener("click", () => {
 
 window.electronAPI.updateLobbyGames((games) => {
 
-    var gamesList = document.getElementById("lobbyGames");
+    var gamesList = document.getElementById("lobby-games");
 
     games.epic.forEach((gameInfo) => {
         let anyInstalled = false;
@@ -324,11 +324,11 @@ window.electronAPI.updateLobbyGames((games) => {
 
 
 })
-const loadingOverlay = document.getElementById("loadingOverlay");
+const loadingOverlay = document.getElementById("loading-overlay");
 
 window.electronAPI.progressOverlay((status) => {
-    const progressBar = document.getElementById("progressBar");
-    const statusText = document.getElementById("statusText");
+    const progressBar = document.getElementById("progress-bar");
+    const statusText = document.getElementById("status-text");
     
     loadingOverlay.style.display = "flex";
     progressBar.style.transition = 'width 0.1s linear'; 
@@ -343,4 +343,21 @@ window.electronAPI.progressOverlay((status) => {
 
 window.electronAPI.progressOverlayComplete(() => {
     loadingOverlay.style.display = "none"
+})
+
+document.getElementById("epic-games-list").addEventListener("click", (e) => {
+    if(e.target.tagName == "LI"){
+        document.querySelectorAll(".li-selected").forEach((listItem) => {
+            listItem.classList.remove("li-selected");
+        })
+
+        e.target.classList.add("li-selected");
+    }
+})
+
+document.getElementById("delete-folder").addEventListener("click", (e) => {
+    const listItemToBeDeleted = document.getElementsByClassName("li-selected")[0];
+
+    console.log(listItemToBeDeleted.innerHTML)
+    listItemToBeDeleted.remove();
 })

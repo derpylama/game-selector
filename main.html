@@ -7,20 +7,20 @@
 </head>
 <body>
 
-    <div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
+    <div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
         <div style="background:#171e25; padding:20px; border-radius:10px; text-align:center;">
             <p>Paste the auth code you received from the browser:</p>
-            <input type="text" id="authCodeInput" style="width:300px; padding:5px;">
+            <input type="text" id="auth-code-input" style="width:300px; padding:5px;">
             <br><br>
-            <button id="submitAuthCode">Submit</button>
-            <button id="cancelAuthCode">Cancel</button>
+            <button id="submit-auth-code">Submit</button>
+            <button id="cancel-auth-code">Cancel</button>
         </div>
     </div>
 
-    <div id="loadingOverlay" style="display: none;">
-        <div class="loadingOverlayContent">
-            <p id="statusText">Loading...</p>
-            <progress id="progressBar" max="100" value="0"></progress>
+    <div id="loading-overlay" style="display: none;">
+        <div class="loading-overlay-content">
+            <p id="status-text">Loading...</p>
+            <progress id="progress-bar" max="100" value="0"></progress>
         </div>
     </div>
 
@@ -33,7 +33,7 @@
 
     <div class="main-content">
         <div id="content-games" class="content-section">
-            <ul id="gamesList">
+            <ul id="games-list">
                 <!-- Games will be dynamically added here -->
             </ul>
         </div>
@@ -42,36 +42,36 @@
             
 
             connect to Backend
-            <button id="connectButton">Connect</button>
+            <button id="connect-button">Connect</button>
             <input type="text" name="" id="username" placeholder="Username">
             <br>
             -------------------------------
             <br>
             create Lobby
-            <input type="text" name="" id="lobbyNameInput" placeholder="Lobby Name">
+            <input type="text" name="" id="lobby-name-input" placeholder="Lobby Name">
 
-            <button id="createLobbyButton">Create Lobby</button>
+            <button id="create-lobby-button">Create Lobby</button>
 
             <br>
             -------------------------------
             <br>
             join Lobby
-            <input type="text" name="" id="lobbyIdInput" placeholder="Lobby ID">
-            <button id="joinLobbyButton">Join Lobby</button>
+            <input type="text" name="" id="lobby-id-input" placeholder="Lobby ID">
+            <button id="join-lobby-button">Join Lobby</button>
             <br>
             -------------------------------
             <br>
             leave Lobby
-            <button id="leaveLobbyButton">Leave Lobby</button>
+            <button id="leave-lobby-button">Leave Lobby</button>
             <br>
             -------------------------------
             <br>
 
-            <div id="lobbyInfo">
+            <div id="lobby-info">
                 
             </div>
 
-            <div id="lobbyGames">
+            <div id="lobby-games">
 
             </div>
 
@@ -80,33 +80,27 @@
         <div id="content-settings" class="content-section" style="display:none;">
 
             <div id="settings-container">
-                <label for="serverAddress">Server IP:</label>
-                <input type="text" id="serverAddress" placeholder="Server Address" value="">
-                <label for="serverPort">Server port:</label>
-                <input type="text" id="serverPort" placeholder="Server Port" value="">
+                <label for="server-address">Server IP:</label>
+                <input type="text" id="server-address" placeholder="Server Address" value="">
+                <label for="server-port">Server port:</label>
+                <input type="text" id="server-port" placeholder="Server Port" value="">
                 
-                <label for="epicGamesList">EpicGames installation folders:</label>
-                <ul id="epicGamesList"></ul>
-                <button id="selectFolder">Select Folder</button>
-                <button id="saveSettingsButton">Save Settings</button>
+                <label for="epic-games-list">EpicGames installation folders:</label>
+                <ul id="epic-games-list"></ul>
+                <button id="select-folder">Select Folder</button>
+                <button id="delete-folder">Delete selected folder</button>
+                <button id="save-settings-button">Save Settings</button>
             </div>
 
 
-            <button id="test">Button</button>
-            <button id="getOwnedGames">get steam games</button>
-
-            
+            <button id="test">Auth</button>
+            <button id="get-owned-games">get steam games</button>
 
             <button id="import">load downloaded epic games</button>
-
-
         </div>
-
 
         <div id="content-about" class="content-section" style="display:none;">
             About Content
-
-
         </div>
     </div>
 
