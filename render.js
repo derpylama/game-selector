@@ -64,7 +64,16 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById("content-games").style.display = "block";
 
     window.electronAPI.getAllGames().then(games => {
+        generateGameCards(games);
+    });
 
+    document.getElementById("menu-games").addEventListener("click",(e) => {
+        window.electronAPI.getAllGames().then(games => {
+            generateGameCards(games);
+        })
+    })
+
+    function generateGameCards(games){
         var gamesList = document.getElementById("games-list");
         games.epicGames.forEach(game => {
             var gameCard = document.createElement("div");
@@ -101,17 +110,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.gameCard img').forEach(img => {
         img.onload = function() {
-        if (img.naturalWidth > img.naturalHeight) {
-            img.classList.add('landscape-img');
-            img.classList.remove('portrait-img');
-        } else {
-            img.classList.add('portrait-img');
-            img.classList.remove('landscape-img');
-        }
-    };
-});
-
-    });
+                if (img.naturalWidth > img.naturalHeight) {
+                    img.classList.add('landscape-img');
+                    img.classList.remove('portrait-img');
+                } else {
+                    img.classList.add('portrait-img');
+                    img.classList.remove('landscape-img');
+                }
+            };
+        });
+    }
         
     document.getElementById("save-settings-button").addEventListener("click", () => {
 
