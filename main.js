@@ -95,7 +95,7 @@ function openSteamLogin(mainWindow) {
     }
   });
   var ip = Settings.getSetting("backendIP");
-  var port = Settings.getSetting("backencPort");
+  var port = Settings.getSetting("backendPort");
 
   steamWin.loadURL(`http://${ip}:${port}/auth/steam`);
   // Listen for navigation to success page with token
@@ -305,8 +305,9 @@ async function getAllGamesFromDb() {
 ipcMain.on('connect-to-server', async (event, username) => {
 
     var ip = Settings.getSetting("backendIP");
-    var port = Settings.getSetting("backendPort")++;
+    var port = Settings.getSetting("backendPort");
     
+    console.log("ws://" + ip + ":" + port++ + "?token=" + authToken, username)
     await getAllGamesFromDb().then(async games => {
         
         if(username.trim() === ""){

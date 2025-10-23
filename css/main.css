@@ -55,7 +55,6 @@ menu div:hover {
 
 .main-content {
     flex: 1; /* Take remaining space */
-    padding: 20px;
 }
 
 .content-section {
@@ -74,19 +73,19 @@ menu div:hover {
     width: 100%;
 }
 
-#lobby-games {
+#content-lobbys {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
     height: 100vh;
     width: 100%;
     overflow: auto;
 }
 
-#content-lobbys {
-    flex: 1;
+#content-lobbys :first-child{
+    margin: 1rem;
 }
+
 
 .gameCard {
     background-color: #171e25;
@@ -169,6 +168,7 @@ menu div:hover {
 #settings-container button{
     width: 30%;
 }
+
 
 #epic-games-list{
     padding: 0.4rem;

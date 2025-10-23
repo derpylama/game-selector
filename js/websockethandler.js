@@ -70,6 +70,7 @@ class LobbyClient {
                     break;
                 case 'username_set':
                     console.log('Username set to:', payload);
+                    this.notifyRenderer('connected-to-server', payload.username)
                     break;
                 case 'error':
                     console.error('Error from server:', payload);

@@ -173,11 +173,11 @@ window.electronAPI.lobbyUpdate((lobbyInfo) => {
     var lobbyID = document.createElement("h4");
     lobbyID.innerText = "Lobby id: " + lobbyInfo.lobbyId;
 
-    var lobbyClients = document.createElement("h5");
+    var lobbyClients = document.createElement("p");
     lobbyClients.innerText = "Lobby members: \n";
 
     lobbyInfo.members.forEach((member) => {
-        lobbyClients.innerText += member.userName + "\n";
+        lobbyClients.innerText += member.userName + ", ";
     })
 
     lobbyInfoCon.appendChild(lobbyName);
@@ -185,6 +185,10 @@ window.electronAPI.lobbyUpdate((lobbyInfo) => {
 
     lobbyInfoCon.appendChild(lobbyClients)
 });
+
+window.electronAPI.connectedToServer((username) => {
+    document.getElementById("connection-status").innerText = "Connected with username: " + username
+})
 
 document.getElementById("create-lobby-button").addEventListener("click", () => {
     console.log("Create Lobby button clicked");

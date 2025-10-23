@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     lobbyUpdate: (callback) => ipcRenderer.on('update-lobby-info', (event, lobbyInfo) => callback(lobbyInfo)),
     updateLobbyGames: (callback) => ipcRenderer.on('update-lobby-games', (event, games) => callback(games)),
 
+    connectedToServer: (callback) => {
+        ipcRenderer.removeAllListeners('connected-to-server');
+        ipcRenderer.on('connected-to-server', (event, username) => callback(username))
+    },
+
     // Automatic listener replacement
     progressOverlay: (callback) => {
         ipcRenderer.removeAllListeners('progress-overlay'); // remove previous
