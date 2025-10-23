@@ -6,3 +6,4 @@ node_modules
 vendor
 games.json
 settings.json
+*out
