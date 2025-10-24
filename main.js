@@ -29,27 +29,30 @@ const dbPath = path.join(baseDir, 'games.sqlite');
 exports.dbPath = dbPath;
 
 function fixEnvironment() {
-  // Always point HOME to the real user home
-  process.env.HOME = os.homedir();
+    // Always point HOME to the real user home
+    process.env.HOME = os.homedir();
 
-  // Ensure user PATHs are available
-  const userLocalBin = `${os.homedir()}/.local/bin`;
-  if (!process.env.PATH.includes(userLocalBin)) {
-    process.env.PATH += `:${userLocalBin}`;
-  }
+    if(process.platform === "linux"){
+        // Ensure user PATHs are available
+        const userLocalBin = `${os.homedir()}/.local/bin`;
+        if (!process.env.PATH.includes(userLocalBin)) {
+            process.env.PATH += `:${userLocalBin}`;
+        }
+    
+        // Debug logging (optional)
+        console.log("Adjusted environment:");
+        console.log("HOME:", process.env.HOME);
+        console.log("PATH:", process.env.PATH);
+    
+        // Optional: verify legendary is found
+        try {
+            const legendaryPath = execSync('which legendary', { encoding: 'utf8' }).trim();
+            console.log("Legendary found at:", legendaryPath);
+        } catch {
+            console.warn("Legendary not found in PATH");
+        }
 
-  // Debug logging (optional)
-  console.log("Adjusted environment:");
-  console.log("HOME:", process.env.HOME);
-  console.log("PATH:", process.env.PATH);
-
-  // Optional: verify legendary is found
-  try {
-    const legendaryPath = execSync('which legendary', { encoding: 'utf8' }).trim();
-    console.log("Legendary found at:", legendaryPath);
-  } catch {
-    console.warn("Legendary not found in PATH");
-  }
+    }
 }
 
 fixEnvironment()
