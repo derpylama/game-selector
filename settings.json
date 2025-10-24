@@ -1,5 +1,5 @@
 {
-    "epicGamesLibraryFolders": "[\"/media/games/epicGames\",\"/media/spel_och_program/epic-games\"]",
-    "backendIP": "80.68.127.112",
+    "epicGamesLibraryFolders": "[]",
+    "backendIP": "",
     "backendPort": "3000"
 }
