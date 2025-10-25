@@ -5,9 +5,10 @@ const fs = require("fs");
 const { BrowserWindow } = require("electron");
 
 class Steam {
-    constructor(){
+    constructor(db){
         this.steamLibraryFile = this.getDefualtSteamLibraryFile()
         this.win = BrowserWindow.getAllWindows()[0];
+        this.db = db;
     }
 
     saveSteamGamesToDb(games){
@@ -19,13 +20,13 @@ class Steam {
         const total = games.games.length;
         var processed = 0;
 
-        const stmt = db.prepare(`
+        const stmt = this.db.prepare(`
             INSERT OR REPLACE INTO steamGames (name, steam_id, img_icon_url)
             VALUES (?, ?, ?)
         `);
 
-        db.serialize(() => {
-            db.run("BEGIN TRANSACTION");
+        this.db.serialize(() => {
+            this.db.run("BEGIN TRANSACTION");
 
             for (const game of games.games) {
                 stmt.run(game.name, game.appid, game.img_icon_url);
@@ -34,9 +35,9 @@ class Steam {
                 //if (err) console.error(`Error inserting ${game.name}:`, err);
             }
 
-            db.run("COMMIT", (err) => {
+            this.db.run("COMMIT", (err) => {
                 if (err) console.error("Transaction commit error:", err);
-                else console.log("All Steam games inserted/updated successfully ✅");
+                else console.log("All Steam games inserted/updated successfully");
 
                 stmt.finalize();
 
@@ -114,24 +115,24 @@ class Steam {
         }
 
                 // Bulk update using a single transaction
-        db.serialize(() => {
-            db.run("BEGIN TRANSACTION");
+        this.db.serialize(() => {
+            this.db.run("BEGIN TRANSACTION");
 
             // Mark installed
-            db.run(
+            this.db.run(
                 `UPDATE steamGames SET is_installed = 1 WHERE steam_id IN (${[...installedAppIds].map(() => "?").join(",")})`,
                 [...installedAppIds],
                 (err) => { if (err) console.error("Error marking installed games:", err); }
             );
 
             // Mark uninstalled
-            db.run(
+            this.db.run(
                 `UPDATE steamGames SET is_installed = 0 WHERE steam_id NOT IN (${[...installedAppIds].map(() => "?").join(",")})`,
                 [...installedAppIds],
                 (err) => { if (err) console.error("Error marking uninstalled games:", err); }
             );
 
-            db.run("COMMIT", (err) => {
+            this.db.run("COMMIT", (err) => {
                 if (err) console.error("Transaction commit error:", err);
                 else console.log("Steam installation status updated ✅");
             });

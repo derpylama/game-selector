@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('Folder selection was canceled.');
         }
 
-        document.getElementById("epicGamesList").innerHTML += `<li>${folderPath}</li>`;
+        document.getElementById("epic-games-list").innerHTML += `<li>${folderPath}</li>`;
         
     }
   });

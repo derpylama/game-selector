@@ -145,7 +145,7 @@ app.whenReady().then(async () => {
 
         epicGames = new EpicGames(dbPath, legendaryPath, db);
         Settings = new settings();
-        Steam = new steam();
+        Steam = new steam(db);
         
         steamLibraryFile = Steam.steamLibraryFile;
         
