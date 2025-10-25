@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 class Settings{
-    constructor(){
-        this.settingsFile = path.join(__dirname, "../settings.json");
+    constructor(baseDir){
+        this.settingsFile = path.join(baseDir, "settings.json");
         this.settings = {
             "epicGamesLibraryFolders": [],
             "backendIP": null,
