@@ -130,7 +130,7 @@ function openSteamLogin(mainWindow) {
   steamWin.webContents.on('did-navigate', (event, url) => {
     if (url.startsWith(`http://${ip}:${port}/auth/steam/success`)) {
       const token = new URL(url).searchParams.get('token');
-      console.log('Token received in main process:', token);
+      //console.log('Token received in main process:', token);
       authToken = token;
       mainWindow.webContents.send('steam-token', token);
       steamWin.close();

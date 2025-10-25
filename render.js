@@ -6,7 +6,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   window.electronAPI.onSteamToken((token) => {
-    console.log('Received token in renderer:', token); // This will now log
+    //console.log('Received token in renderer:', token); // This will now log
   });
 
   window.electronAPI.onOwnedGamesResponse((games) =>{
