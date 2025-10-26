@@ -62,7 +62,8 @@ class LobbyClient {
                     console.log('Lobby update:');
 
                     if("steam" in payload.info || "epic" in payload.info) {
-                        this.notifyRenderer("update-lobby-games", payload)
+                        this.notifyRenderer("update-lobby-games", payload);
+                        this.notifyRenderer("update-lobby-info", { lobbyId: this.lobbyId, lobbyName: this.lobbyName, members: payload.lobbyMembers  });
                     }
                     break;
                 case 'lobby_left':
