@@ -25,23 +25,31 @@
     "ws": "^8.18.3"
   },
 
-  "config": {"forge":{
-        "packageConfig": {},
-        "makers": [
-            {
-                "name": "@electron-forge/maker-squirrel",
-                "config": {
-                    "name": "gameSelector"
-                }
-            },
-
-            {
-                "name": "@electron-forge/maker-deb",
-                "config": {
-                    "maintainer": "mupp"
-                }
-            }
-        ]
-  }}
+  "config": {
+  "forge": {
+    "packagerConfig": {
+      "asar": {
+        "unpack": "resources/legendary.exe"
+      },
+      "extraResource": [
+        "resources/legendary.exe"
+      ]
+    },
+    "makers": [
+      {
+        "name": "@electron-forge/maker-squirrel",
+        "config": {
+          "name": "gameSelector"
+        }
+      },
+      {
+        "name": "@electron-forge/maker-deb",
+        "config": {
+          "maintainer": "mupp"
+        }
+      }
+    ]
+  }
+}
 
 }

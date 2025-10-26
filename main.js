@@ -21,6 +21,8 @@ var win;
 var legendaryPath;
 var db;
 
+const isDev = !app.isPackaged;
+
 const baseDir = app.isPackaged
   ? app.getPath('userData')               // packaged app
   : path.join(__dirname);                 // dev mode
@@ -71,27 +73,25 @@ function createWindow() {
 }
 
 function getLegendaryPath() {
-  const platform = process.platform;
-  let legendaryPath;
+    const platform = process.platform;
 
   if (platform === 'win32') {
-
+    const binaryName = 'legendary.exe';
     const basePath = app.isPackaged
-      ? path.join(process.resourcesPath, 'resources') // in packaged app
-      : path.join(__dirname, 'resources');            // in dev
-    // Windows: path to precompiled exe inside resources
-    legendaryPath = path.join(basePath, 'legendary.exe');
-    // check existence
-    if (!fs.existsSync(legendaryPath)) {
-      throw new Error(`Legendary binary not found at ${legendaryPath}`);
+      ? process.resourcesPath   // packaged: resources next to app.asar
+      : path.join(__dirname, 'resources'); // dev: relative folder
+
+    const fullPath = path.join(basePath, binaryName);
+
+    if (!fs.existsSync(fullPath)) {
+      throw new Error(`Legendary binary not found at ${fullPath}`);
     }
-  } else if (platform === 'linux' || platform === 'darwin') {
-    // Linux/macOS: assume it's in PATH or optionally bundle a binary
-    legendaryPath = 'legendary'; // user must have installed CLI
+
+    return fullPath;
+  } else {
+    // macOS/Linux: assume in PATH
+    return 'legendary';
   }
-
-
-  return legendaryPath;
 }
 
 function checkLegendaryCommand(){

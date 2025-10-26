@@ -9,7 +9,7 @@ class Settings{
             "backendIP": null,
             "backendPort": null
         };
-
+        console.log(this.settingsFile);
         this.loadSettings();
     }
 
