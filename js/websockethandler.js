@@ -61,7 +61,7 @@ class LobbyClient {
                 case 'lobby_update':
                     console.log('Lobby update:');
 
-                    if("steam" in payload){
+                    if("steam" in payload.info || "epic" in payload.info) {
                         this.notifyRenderer("update-lobby-games", payload)
                     }
                     break;

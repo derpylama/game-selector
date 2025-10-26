@@ -219,109 +219,115 @@ document.getElementById("leave-lobby-button").addEventListener("click", () => {
 });
 
 window.electronAPI.updateLobbyGames((games) => {
-
+    console.log("Lobby Games Updated:", games);
     var gamesList = document.getElementById("lobby-games");
 
-    games.epic.forEach((gameInfo) => {
-        let anyInstalled = false;
+    if(Array.isArray(games.info.epic)){
 
-        var gameCard = document.createElement("div");
-
-        gameCard.classList = "gameCard";
-        
-        gameCard.innerHTML = `
-            <img src="${gameInfo.game.thumbnail_url}" alt="${gameInfo.game.title} Thumbnail" class="gameThumbnail">
-            <div class="gameInfo">
-                <h3>${gameInfo.game.title}</h3>
-
-            </div>
-        `;
-
-        var installDiv = document.createElement("div");
-        installDiv.classList = "installationStatus";
-
-        gameInfo.owners.forEach((owner) => {
-
-            if(owner.installed){
-                    anyInstalled = true;
-
-                if(!document.getElementById("installMessage")){
-                    var installMsg = document.createElement("h5");
-                    
-                    installMsg.innerText = "Have it installed:";
-
-                    installDiv.appendChild(installMsg);
+        games.info.epic.forEach((gameInfo) => {
+            let anyInstalled = false;
+    
+            var gameCard = document.createElement("div");
+    
+            gameCard.classList = "gameCard";
+            
+            gameCard.innerHTML = `
+                <img src="${gameInfo.game.thumbnail_url}" alt="${gameInfo.game.title} Thumbnail" class="gameThumbnail">
+                <div class="gameInfo">
+                    <h3>${gameInfo.game.title}</h3>
+    
+                </div>
+            `;
+    
+            var installDiv = document.createElement("div");
+            installDiv.classList = "installationStatus";
+    
+            gameInfo.owners.forEach((owner) => {
+    
+                if(owner.installed){
+                        anyInstalled = true;
+    
+                    if(!document.getElementById("installMessage")){
+                        var installMsg = document.createElement("h5");
+                        
+                        installMsg.innerText = "Have it installed:";
+    
+                        installDiv.appendChild(installMsg);
+                    }
+    
+                    var user = document.createElement("p");
+                    user.innerText = owner.username;
+    
+                    installDiv.appendChild(user);
                 }
-
-                var user = document.createElement("p");
-                user.innerText = owner.username;
-
-                installDiv.appendChild(user);
-            }
-            else {
-                // Mark card visually if not installed
+                else {
+                    // Mark card visually if not installed
+                    gameCard.classList.add("notInstalled");
+                }
+            })
+        
+            // After checking all owners
+            if (!anyInstalled) {
                 gameCard.classList.add("notInstalled");
             }
-        })
-    
-        // After checking all owners
-        if (!anyInstalled) {
-            gameCard.classList.add("notInstalled");
-        }
-    
-        gameCard.appendChild(installDiv);
-        gamesList.appendChild(gameCard);
         
-    });
+            gameCard.appendChild(installDiv);
+            gamesList.appendChild(gameCard);
+            
+        });
+    }
 
-    games.steam.forEach((gameInfo) => {
-        let anyInstalled = false;
-        var gameCard = document.createElement("div");
+    if(Array.isArray(games.info.steam)){
 
-        gameCard.classList = "gameCard";
-                
-        gameCard.innerHTML = `
-            <img src="https://media.steampowered.com/steamcommunity/public/images/apps/${gameInfo.game.steam_id}/${gameInfo.game.img_icon_url}.jpg" alt="${gameInfo.game.name} Thumbnail" class="gameThumbnail">
-            <div class="gameInfo">
-                <h3>${gameInfo.game.name}</h3>
-            </div>
-        `;
+        games.info.steam.forEach((gameInfo) => {
+            let anyInstalled = false;
+            var gameCard = document.createElement("div");
 
-        var installDiv = document.createElement("div");
-        installDiv.classList = "installationStatus";
-
-        gameInfo.owners.forEach((owner) => {
-
-            if(owner.installed){
-                    anyInstalled = true;
-
-                if(!document.getElementById("installMessage")){
-                    var installMsg = document.createElement("h5");
+            gameCard.classList = "gameCard";
                     
-                    installMsg.innerText = "Have it installed:";
+            gameCard.innerHTML = `
+                <img src="https://media.steampowered.com/steamcommunity/public/images/apps/${gameInfo.game.steam_id}/${gameInfo.game.img_icon_url}.jpg" alt="${gameInfo.game.name} Thumbnail" class="gameThumbnail">
+                <div class="gameInfo">
+                    <h3>${gameInfo.game.name}</h3>
+                </div>
+            `;
 
-                    installDiv.appendChild(installMsg);
+            var installDiv = document.createElement("div");
+            installDiv.classList = "installationStatus";
+
+            gameInfo.owners.forEach((owner) => {
+
+                if(owner.installed){
+                        anyInstalled = true;
+
+                    if(!document.getElementById("installMessage")){
+                        var installMsg = document.createElement("h5");
+                        
+                        installMsg.innerText = "Have it installed:";
+
+                        installDiv.appendChild(installMsg);
+                    }
+
+                    var user = document.createElement("p");
+                    user.innerText = owner.username;
+
+                    installDiv.appendChild(user);
                 }
-
-                var user = document.createElement("p");
-                user.innerText = owner.username;
-
-                installDiv.appendChild(user);
-            }
-            else {
-                // Mark card visually if not installed
+                else {
+                    // Mark card visually if not installed
+                    gameCard.classList.add("notInstalled");
+                }
+            })
+        
+            // After checking all owners
+            if (!anyInstalled) {
                 gameCard.classList.add("notInstalled");
             }
-        })
-    
-        // After checking all owners
-        if (!anyInstalled) {
-            gameCard.classList.add("notInstalled");
-        }
 
-        gameCard.appendChild(installDiv);
-        gamesList.appendChild(gameCard)
-    })
+            gameCard.appendChild(installDiv);
+            gamesList.appendChild(gameCard)
+        })
+    }
 
     document.querySelectorAll('.gameCard img').forEach(img => {
         img.onload = function() {
